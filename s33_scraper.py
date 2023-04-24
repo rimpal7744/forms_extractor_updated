@@ -382,7 +382,7 @@ def get_clauses(pdf_path):
                                         full_line_splited = full_line_splited[:-1]
                                         line = ' '.join(full_line_splited)
                                     if '/' in full_line_splited[-1]:
-                                        month = full_line_splited[-1].split('/')[1]
+                                        month = full_line_splited[-1].split('/')[0]
                                         year = full_line_splited[-1].split('/')[2]
                                         full_line_splited[-1] = year + '-' + month
                                         line = ' '.join(full_line_splited)
@@ -415,7 +415,7 @@ def get_clauses(pdf_path):
                                     splited_line=splited_line[:-1]
                                     line=' '.join(splited_line)
                                 if '/' in splited_line[-1]:
-                                    month=splited_line[-1].split('/')[1]
+                                    month=splited_line[-1].split('/')[0]
                                     year=splited_line[-1].split('/')[2]
                                     splited_line[-1]=year+'-'+month
                                     line=' '.join(splited_line)
