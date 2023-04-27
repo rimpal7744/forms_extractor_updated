@@ -27,7 +27,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     #Different regex to detect which form it is
     form30regexp = re.compile(r'(FORM 30)|(FORM30)')
     form33regexp = re.compile(r'(FORM 33)|(FORM33)')
-    form26regexp = re.compile(r'(FORM 26)|(FORM26)')
+    form26regexp = re.compile(r'(FORM 26)|(FORM26)|(FORM 25)|(FORM25)')
     #
     Parse=False
     final_result={}
