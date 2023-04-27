@@ -14,7 +14,7 @@ def get_first_page(result):
                'number': '','amendment_no': [], 'date': [], 'award_date': '', 'award_amount': '', 'offer_date': ''}
 
     all_keys=['2 CONTRACINO','3 SOLICITATIONNO','2. CONTRA CT NO.',' 5 DAIE ISSUED','2. CONTRACT NUMBER','3. SOLICITATION NUMBER','5. DATE ISSUED','2. CONTRACT NO.','3. SOLICITATION NO.','5.DATE ISSUED','RATING','6. REQUISITION/PURCHASE NUMBER','6 REQUISITION P URCHASE NO','6.RE QUISITION/P URCHASE NO.','A. NAME'
-        ,'C. E-MAIL ADDRESS','AREA CODE','AMENDMENT NO.','AMENDMENT NO','INUMBER','EXTENSION','DATE','20. AMOUNT','28. AWARD DATE','4. TYPE OF SOLICITATION','4 TYPE OF SOLICITATION|','20 AMOUNT',
+        ,'C. E-MAIL ADDRESS','AREA CODE','AMENDMENT NO.','AMENDMENT NO','INUMBER','EXTENSION','DATE','20. AMOUNT','28. AWARD DATE','4. TYPE OF SOLICITATION','4 TYPE OF SOLICITATION|','[4. TYPE OF SOLICITATION','20 AMOUNT',
         '28 AWARDDAIE','28 AWARDDATE','18. OFFERDATE','18 OFFERDATE','18. OFFER DATE']
 
     amendments=[]
@@ -23,7 +23,7 @@ def get_first_page(result):
     # iterating over a result from OCR and saving box which have value from all_keys
     for line in result:
         if 'STANDARD FORM' in str(line[1][0]):
-            my_dict['STANDARD FORM']=str(line[1][0])
+            my_dict['standard_form']=str(line[1][0])
         if str(line[1][0]) in all_keys:
             line[0][2][1] = line[0][2][1] + 5
             line[0][3][1] = line[0][3][1] + 50
@@ -37,22 +37,22 @@ def get_first_page(result):
             if i[1] in amend_list:
                 if r[1][0] not in all_keys and (0<=(r[0][0][1]-i[0][0][1])<80) and 0<=(i[0][0][0]-r[0][0][0])<80:
                     amendments.append(r[1][0])
-                    my_dict['AMENDMENT NO.']=amendments
+                    my_dict['amendment_no']=amendments
             if i[1] in datelist:
                 if r[1][0] not in all_keys and (0 <= (r[0][0][1] - i[0][0][1]) < 80) and 0 <= (i[0][0][0] - r[0][0][0]) < 80:
                     dates_list.append(r[1][0])
-                    my_dict['Date'] = dates_list
+                    my_dict['date'] = dates_list
 
             if (0<=(r[0][0][1]-i[0][0][1])<80) and 0<=(r[0][0][0]-i[0][0][0])<80 and r[1][0] not in all_keys :
                 # lists for classifying values for matching
-
                 Contract_names=['2 CONTRACINO','2. CONTRACT NO.','2. CONTRACT NUMBER','2. CONTRA CT NO.']
                 Soliciation_names=['3 SOLICITATIONNO','3. SOLICITATION NUMBER','3. SOLICITATION NO.']
+                rating_names=['RATING']
                 Dates_name=['5.DATE ISSUED','5. DATE ISSUED',' 5 DAIE ISSUED']
                 Purchase_names=['6. REQUISITION/PURCHASE NUMBER','6 REQUISITION P URCHASE NO','6.RE QUISITION/P URCHASE NO.']
                 name_list=['A. NAME']
                 email_list=['C. E-MAIL ADDRESS']
-                area_list=['area_code']
+                area_list=['area_code','AREA CODE']
                 number_list=['INUMBER']
                 extension_list=['EXTENSION']
                 datelist=['DATE']
@@ -65,18 +65,17 @@ def get_first_page(result):
                 if str(i[1]) in Contract_names:
                     name='contract_number'
                 elif str(i[1]) in Soliciation_names:
-
                     name='solicitation_number'
                 elif str(i[1]) in Dates_name:
                     name='date_issued'
                 elif str(i[1]) in Purchase_names:
                     name='requisition/purchase_number'
                 elif  str(i[1]) in name_list:
-                    name='Name'
+                    name='name'
                 elif str(i[1]) in email_list:
                     name='email'
                 elif str(i[1]) in area_list:
-                    name='Area Code'
+                    name='area_code'
                 elif str(i[1]) in extension_list:
                     name='extension'
                 elif str(i[1]) in number_list:
@@ -88,15 +87,18 @@ def get_first_page(result):
                         answer=answer+')'
                 elif str(i[1]) in award_names:
                     name='award_amount'
+                elif str(i[1]) in rating_names:
+                    name='rating'
                 elif str(i[1]) in datelist:
-
                     dates_list.append(r[1][0])
                 elif str(i[1]) in awarddate:
                     name='award_date'
                 elif str(i[1]) in offerdate:
                     name='offer_date'
                 else:
-                    name=str(i[1])
+                    end_name=str(i[1]).lower()
+                    end_name.replace(' ','_')
+                    name=end_name
                 if name=='amendment_no':
                     my_dict[name] = amendments
                 elif name=='date':
@@ -173,7 +175,6 @@ def method1(pdf_path,pages):
                             dff['UNIT PRICE'] = split_units[1]
                         else:
                             dff['UNIT PRICE'] = ''
-
                     if index_change == True:
                         data_change = [dff['SUPPLIES/SERVICES'], dff['QUANTITY'], dff['UNIT']]
                         dff['QUANTITY'] = data_change[0]
@@ -201,7 +202,6 @@ def method1(pdf_path,pages):
                         for index, row in target_df.iterrows():
                             full_text.append(row['SUPPLIES/SERVICES'])
                             full_text.append(row['QUANTITY'])
-
                         str1 = ''.join(full_text)
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
                         supplies_clauses = name.findall(str1)
@@ -468,5 +468,4 @@ def main(pdf_path,result):
     all_clauses=get_clauses(pdf_path)
     mydict['clauses']=all_clauses
     return mydict
-
 
