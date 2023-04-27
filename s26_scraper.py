@@ -18,7 +18,7 @@ def get_first_page(result):
 
     for line in result:
         if 'STANDARD FORM' in str(line[1][0]):
-            my_dict['standard_form']=str(line[1][0])
+            my_dict['standard_form']=str(line[1][0]).replace('25','26')
         if str(line[1][0]) in all_keys:
             boxes.append([line[0],line[1][0]])
 
