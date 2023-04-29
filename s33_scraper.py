@@ -142,7 +142,8 @@ def get_tables_pages(pdf_path):
             if re.search(String3, Text) and re.search(String4, Text) and re.search(String5,Text):
                 method='second'
                 table_pages.append(i)
-
+    if len(table_pages)>2:
+        table_pages.append(table_pages[-1]+1)
     return table_pages,method
 
 
