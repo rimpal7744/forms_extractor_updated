@@ -1,128 +1,172 @@
 import json
-import re
-from paddleocr import PaddleOCR
 import pdfplumber
 import camelot
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+import re
+
+def get_key_boxes(result):
+    #match regex for all key values from OCR result and get their boxes
+    boxes=[]
+    #to append names given in forms for key values
+    names=[]
+    for element in result:
+        #all regex matching for keys respectively
+
+        # Amendmentregexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
+        Contract_regexp = re.compile(r'(CONTRACT)|(CONIRACT)')
+        Contract_regexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
+        Date_regexp = re.compile(r'(EFFECTIVE)|(EFFECIVE)')
+        Date_regexp2 = re.compile(r'(DATE)|(DAIE)')
+        Rating_regexp = re.compile(r'(RATING)|(RAIING)')
+        Requisition_regexp = re.compile(r'(PURCHASE)|(REQUISITION)')
+        Requisition_regexp2 = re.compile(r'(NO)|(NUMBER)|(NO.)')
+        Project_regexp = re.compile(r'(PROJECT)')
+        Project_regexp2 = re.compile(r'(NO)|(NUMBER)')
+        Issued_regexp = re.compile(r'(ISSUED)')
+        Issued_regexp2 = re.compile(r'(BY)|(8Y)')
+        Admin_regexp = re.compile(r'(ADMINISTERED)')
+        Admin_regexp2 = re.compile(r'(BY)|(8Y)')
+        if Rating_regexp.search(element[1][0]) :
+                names.append(element[1][0])
+                boxes.append([element[0], 'rating'])
+        if Contract_regexp.search(element[1][0]) and Contract_regexp2.search(element[1][0]):
+            if ('2') in element[1][0]:
+                names.append(element[1][0])
+                boxes.append([element[0], 'contract_number'])
+        if Date_regexp.search(element[1][0]) and Date_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'effective_date'])
+        if Requisition_regexp.search(element[1][0]) and Requisition_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'requisition/purchase_number'])
+        if Project_regexp.search(element[1][0]) and Project_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'project_number'])
+        if Issued_regexp.search(element[1][0]) and Issued_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'issued_by'])
+        if Admin_regexp.search(element[1][0]) and Admin_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'administered_by'])
+
+    #returning boxes list having coordinates of all key values with their name like given below list
+    # [[[651.0, 133.0], [815.0, 133.0], [815.0, 156.0], [651.0, 156.0]],effective_date]
+    return boxes,names
 
 
 def get_first_page(result):
-    my_dict={'contract_code':'','effective_date':'','requisition/purchase_number':'','rating':'','issued_by':'','administered_by':'','standard_form':'','project_number':''}
-    #giving all key pattern to extract relevant data
-
-    all_keys=['2. CONTRACT (PROC. INST. IDENT.) NO.','2. CONTRACT (Proc Inst. Indent ) NO','3. EFFECTIVE DATE','3 EFFECTIVE DATE',' 4. REQUISITION / PURCHASE REQUEST /PROJECT NO.','[4 REQUISIT:ON/PURCHASE REQUEST/PROJECT NO.','RATING',' 6. ADMINISTERED BY (IF OTHER THAN ITEM 5)','3.EFFECTIVE DATE',
-        '5. ISSUED BY AFLCMC/HBQK','5 ISSUED BY','6 ADMINISTERED BY (if other than ftem 5)','6 ADMINISTERED BY (if other than ftem 5)',' 6. ADMINISTERED BY (IF OTHER THAN ITEM 5)']
-
-    boxes = []
-    #iterating over a result from OCR and saving box which have value from all_keys
-
-    for line in result:
-        if 'STANDARD FORM' in str(line[1][0]):
-            my_dict['standard_form']=str(line[1][0]).replace('25','26')
-        if str(line[1][0]) in all_keys:
-            boxes.append([line[0],line[1][0]])
+    # assigning all key values
+    my_dict={'contract_number':'','effective_date':'','requisition/purchase_number':'','rating':'','issued_by':'',
+             'administered_by':'','standard_form':'','project_number':''}
+    # getting boxes for all key values with their names
+    boxes, names = get_key_boxes(result)
+    # iterating over a result from OCR and saving a form type
 
 
     issued_text = []
-    admin_text=[]
-    lastx = ''
-    lasty = ''
-    adminx = ''
-    adminy = ''
-    admin_code=''
-    issue_code=''
-
+    admin_text = []
+    issuedx_coordinate = ''
+    issuedy_coordinate = ''
+    adminx_coordinate = ''
+    adminy_coordinate = ''
+    issue_code = ''
+    admin_code = ''
     for r in result:
-        #lists for classifying values for matching
-        contract_list=['2. CONTRACT (PROC. INST. IDENT.) NO.','2. CONTRACT (Proc Inst. Indent ) NO']
-        rating_list=['RATING']
-        date_list=['3. EFFECTIVE DATE','3 EFFECTIVE DATE']
-        purchase_list=[' 4. REQUISITION / PURCHASE REQUEST /PROJECT NO.','[4 REQUISIT:ON/PURCHASE REQUEST/PROJECT NO.']
-        isuuedd=['5. ISSUED BY','5 ISSUED BY','5. ISSUED BY AFLCMC/HBQK']
-        project=['5. PROJECT NUMBER (If applicable)','5. PROJECT NO. (If applicable)','5 PROJECT NO,(lf applicsb/e)']
-        admin=['6 ADMINISTERED BY (if other than ftem 5)',' 6. ADMINISTERED BY (IF OTHER THAN ITEM 5)']
-
-
+        #  saving a form type
+        if 'FORM' in str(r[1][0]):
+            my_dict['standard_form'] = str(r[1][0]).replace('25','26')
         for i in boxes:
-            if str(i[1]) in purchase_list:
-                xx=301
-                yy=35
-            else:
-                xx=150
-                yy=60
-
-            if admin_code=='':
-                if r[1][0] in admin:
-                    present = result.index(r)
-                    admin_string=result[present+2][1][0]
-                    digit = 0
-                    for ch in admin_string:
-                        if ch.isdigit():
-                            digit = digit + 1
-                    if digit>=3:
-                        admin_code='Code: '+result[present+2][1][0]
-
-            if issue_code=='':
-                if r[1][0] in isuuedd:
-                    present = result.index(r)
-                    splited=result[present+1][1][0].split(' ')
-                    if len(splited)==2:
-                        if splited[0]=='CODE':
-                            issue_code="CODE: "+splited[1]
-                    if issue_code=='':
-                        issued_string=result[present+2][1][0]
+            # algo for getting CODE value in adminstered by
+            if admin_code == '':
+                if i[1] == 'administered_by':
+                    Adminregexp = re.compile(r'(ADMINISTERED)')
+                    Adminregexp2 = re.compile(r'(BY)|(8Y)')
+                    if Adminregexp.search(r[1][0]) and Adminregexp2.search(r[1][0]):
+                        present = result.index(r)
+                        admin_string = result[present + 2][1][0]
                         digit = 0
-                        for ch in issued_string:
+                        for ch in admin_string:
                             if ch.isdigit():
                                 digit = digit + 1
-                        if digit>=3:
-                            issue_code='Code: '+result[present+2][1][0]
+                        if digit >= 3 or len(admin_string.split(' ')) == 1:
+                            admin_code = 'Code: ' + result[present + 2][1][0].replace('|', '')
 
-            if (0 <= (r[0][0][1] - i[0][0][1]) <= yy) and -20 <= (r[0][0][0] - i[0][0][0]) <= xx and r[1][0] not in all_keys:
-                if i[1] in contract_list:
-                    my_dict['contract_code']=r[1][0]
+            # algo for getting CODE value in ISSUED by
+            if issue_code == '':
+                if i[1] == 'issued_by':
+                    Issuedregexp = re.compile(r'(ISSUED)')
+                    Issuedregexp2 = re.compile(r'(BY)|(8Y)')
+                    if Issuedregexp.search(r[1][0]) and Issuedregexp2.search(r[1][0]):
+                        present = result.index(r)
+                        splited = result[present + 1][1][0].split(' ')
+                        if len(splited) == 2:
+                            if splited[0] == 'CODE':
+                                issue_code = "CODE: " + splited[1].replace('|', '')
+                        if issue_code == '':
+                            issued_string = result[present + 2][1][0]
+                            digit = 0
+                            for ch in issued_string:
+                                if ch.isdigit():
+                                    digit = digit + 1
+                            if digit >= 3 or len(issued_string.split(' ')) == 1:
+                                issued_string = issued_string.replace('|', '')
+                                issue_code = 'CODE: ' + issued_string
 
-                if i[1] in rating_list:
-                    my_dict['rating']=r[1][0]
+            # defining different x and y coordinates for different keys
+            if str(i[1]) == 'requisition/purchase_number':
+                x_coordinate=301
+                y_coordinate=35
+            elif str(i[1])=='administered_by':
+                x_coordinate = 150
+                y_coordinate = 65
+            else:
+                x_coordinate=150
+                y_coordinate=60
+            # checking value which matches algo on coordinates
+            if (0 <= (r[0][0][1] - i[0][0][1]) < y_coordinate) and -20 <= (r[0][0][0] - i[0][0][0]) < x_coordinate and r[1][0] not in names:
+                value=r[1][0]
+                if i[1] != 'issued_by' and i[1] != 'administered_by':
+                    # getting values below the key value boxes and save them to json
+                    if i[1]=='effective_date':
+                        value = value.replace('Mby', 'May')
+                        value = value.replace('I', '1')
+                    my_dict[i[1]] = value
+        # issued_by and adminstered by have large values so combining all values to issued_text and admin_text
+                if i[1] == 'issued_by':
+                    issuedx_coordinate = r[0][0][0]
+                    issuedy_coordinate = r[0][0][1]
+                    if issue_code not in issued_text:
+                        issued_text.append(issue_code)
+                if i[1] == 'administered_by':
+                    adminx_coordinate = r[0][0][0]
+                    adminy_coordinate = r[0][0][1]
+                    if admin_code not in admin_text:
+                        admin_text.append(admin_code)
 
-                if i[1] in date_list:
-                    if 'Mby' in r[1][0]:
-                        r[1][0]=r[1][0].replace('Mby','May')
-                    my_dict['effective_date'] = r[1][0]
-
-                if i[1] in purchase_list:
-                    my_dict['requisition/purchase_number'] = r[1][0]
-
-                if i[1] in project:
-                    my_dict['project_number']=r[1][0]
-
-                if i[1] in isuuedd:
-                    lastx = r[0][0][0]
-                    lasty = r[0][0][1]
-                    issued_text.append(issue_code)
-
-                if i[1] in admin:
-                    adminx = r[0][0][0]
-                    adminy = r[0][0][1]
-                    admin_text.append(admin_code)
-
-        if adminy:
-            if -8<=(r[0][0][0]-adminx)<10 and 0<=(r[0][0][1]-adminy)<=62:
-                admin_text.append(r[1][0])
-                adminx = r[0][0][0]
-                adminy = r[0][0][1]
-        if lastx:
-            if -8<=(r[0][0][0]-lastx)<10 and 0<=(r[0][0][1]-lasty)<=35:
+        if adminy_coordinate:
+            if -8 <= (r[0][0][0] - adminx_coordinate) < 10 and 0 <= (r[0][0][1] - adminy_coordinate) <= 60:
+                if r[1][0] not in admin_text:
+                    admin_text.append(r[1][0])
+                adminx_coordinate = r[0][0][0]
+                adminy_coordinate = r[0][0][1]
+        if issuedx_coordinate:
+            if -8 <= (r[0][0][0] - issuedx_coordinate) < 10 and 0 <= (r[0][0][1] - issuedy_coordinate) <= 35:
                 if 'NAME AND ADDRESS' not in r[1][0]:
-                    issued_text.append(r[1][0])
-                    lastx = r[0][0][0]
-                    lasty = r[0][0][1]
-    if len(issued_text)>0:
-        my_dict['issued_by']='\n'.join(issued_text)
-    if len(admin_text)>0:
+                    if r[1][0] not in issued_text:
+                        issued_text.append(r[1][0])
+                    issuedx_coordinate = r[0][0][0]
+                    issuedy_coordinate = r[0][0][1]
+
+    # joining issued_text and administered_text to feed in json
+    if len(issued_text) > 0:
+        my_dict['issued_by'] = '\n'.join(issued_text)
+    if len(admin_text) > 0:
         my_dict['administered_by'] = '\n'.join(admin_text)
+    if my_dict['standard_form'] == '':
+        my_dict['standard_form'] = 'STANDARD FORM 26'
 
     return my_dict
+
+
 
 
 
@@ -214,6 +258,8 @@ def get_clauses(pdf_path):
         # Extract text and do the search
         for i in range(2, NumPages):
             Text = pdf.pages[i].extract_text()
+            Text = Text.replace('DFARS', '')
+            Text = Text.replace('FAR', '')
             #matching clauses pattern to get relevant line
             NumRegex = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}', flags=0)
             array = NumRegex.search(Text)
@@ -225,10 +271,13 @@ def get_clauses(pdf_path):
                     NumRegex3 = re.compile(r'\d{4}-\d{2}', flags=0)
                     lines = Text.split('\n')
                     for line in lines:
+                        if line[0]==' ':
+                            line=line[1:]
+                        line=line.strip()
                         splited_line = line.split(' ')
                         try:
                             next_line = lines[lines.index(line) + 1]
-                            splited_next_line = next_line.split(' ')
+                            splited_next_line = next_line.strip().split(' ')
                         except:
                             pass
 
@@ -236,6 +285,7 @@ def get_clauses(pdf_path):
                             if not NumRegex2.search(splited_line[-1]):
                                 line = line + ' ' + next_line
                                 if len(line) > 20:
+                                    line = line.strip()
                                     line = line.replace('(', '')
                                     line = line.replace(')', '')
                                     new_split_line = line.split(' ')
@@ -252,6 +302,7 @@ def get_clauses(pdf_path):
 
                         if NumRegex.search(splited_line[0]) and (NumRegex2.search(splited_line[-1])):
                             if len(line) > 20:
+
                                 line = line.replace('(', '')
                                 line = line.replace(')', '')
                                 new_split_line = line.split(' ')
@@ -276,24 +327,32 @@ def get_clauses(pdf_path):
 
     #changing clauses format
     clauses_new_list = []
+
     for clauses in clauses_list:
         splited_clause = clauses.split(' ')
-        updated_clause = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
-        clauses_new_list.append(updated_clause)
-
+        if splited_clause[-1][0:3] in Months_list:
+            splited_clause[-1]=splited_clause[-1][3:]+'-'+str(Months_list.index(splited_clause[-1][0:3]))
+        if len(splited_clause[-1].split('-'))==2 and '.' not in splited_clause[-1] :
+            updated_clause = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
+            clauses_new_list.append(updated_clause)
+    if len(clauses_new_list)>2:
+        clauses_new_list=list(set(clauses_new_list))
     return clauses_new_list
 
 
 def mains26(pdf_path,result):
-    #for getting data from first_page
+    # for getting data from first_page
     my_dict=get_first_page(result)
     #for getting numbers of pages which have line_items
     page_number_list=line_item_pages(pdf_path)
-    #for getting line_items from table_pages
-    line_items=get_table(pdf_path,page_number_list)
+    # #for getting line_items from table_pages
+    if len(page_number_list)>1:
+        line_items=get_table(pdf_path,page_number_list)
+    else:
+        line_items=[]
     my_dict['items']=line_items
     my_dict['clauses']=get_clauses(pdf_path)
-    #for returning response
+    # #for returning response
     return my_dict
 
 
