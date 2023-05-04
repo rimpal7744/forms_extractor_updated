@@ -333,6 +333,8 @@ def get_clauses(pdf_path):
         if splited_clause[-1][0:3] in Months_list:
             splited_clause[-1]=splited_clause[-1][3:]+'-'+str(Months_list.index(splited_clause[-1][0:3]))
         if len(splited_clause[-1].split('-'))==2 and '.' not in splited_clause[-1] :
+            alpharemoval = re.sub(r'\s*[A-Za-z]+\b', '', splited_clause[-1])
+            splited_clause[-1] = alpharemoval.rstrip()
             updated_clause = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
             clauses_new_list.append(updated_clause)
     if len(clauses_new_list)>2:
