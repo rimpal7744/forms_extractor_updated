@@ -280,10 +280,33 @@ def get_clauses(pdf_path):
                             splited_next_line = next_line.strip().split(' ')
                         except:
                             pass
+                        try:
+                            third_line = lines[lines.index(next_line) + 1]
+                            splited_third_line = third_line.strip().split(' ')
+                        except:
+                            pass
 
                         if NumRegex.search(splited_line[0]) and NumRegex2.search(splited_next_line[-1]):
                             if not NumRegex2.search(splited_line[-1]):
                                 line = line + ' ' + next_line
+                                if len(line) > 20:
+                                    line = line.strip()
+                                    line = line.replace('(', '')
+                                    line = line.replace(')', '')
+                                    new_split_line = line.split(' ')
+                                    if new_split_line[-2] in Months_list:
+                                        new_split_line[-2] = new_split_line[-1] + '-' + str(Months_list.index(new_split_line[-2]))
+                                        new_split_line = new_split_line[:-1]
+                                        line = ' '.join(new_split_line)
+                                    if '/' in new_split_line[-1]:
+                                        month = new_split_line[-1].split('/')[0]
+                                        year = new_split_line[-1].split('/')[2]
+                                        new_split_line[-1] = year + '-' + month
+                                        line = ' '.join(new_split_line)
+                                    clauses_list.append(line)
+                        if NumRegex.search(splited_line[0]) and NumRegex2.search(splited_third_line[-1]):
+                            if (not NumRegex2.search(splited_line[-1])) and (not NumRegex2.search(splited_next_line[-1])):
+                                line = line + ' ' + next_line +' '+third_line
                                 if len(line) > 20:
                                     line = line.strip()
                                     line = line.replace('(', '')
