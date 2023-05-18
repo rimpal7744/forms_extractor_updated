@@ -8,28 +8,32 @@ def get_key_boxes(result):
     boxes=[]
     #to append names given in forms for key values
     names=[]
+    rating=''
     for element in result:
         #all regex matching for keys respectively
 
         # Amendmentregexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
-        Contract_regexp = re.compile(r'(CONTRACT)|(CONIRACT)')
-        Contract_regexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
-        Date_regexp = re.compile(r'(EFFECTIVE)|(EFFECIVE)')
-        Date_regexp2 = re.compile(r'(DATE)|(DAIE)')
-        Rating_regexp = re.compile(r'(RATING)|(RAIING)')
-        Requisition_regexp = re.compile(r'(PURCHASE)|(REQUISITION)')
-        Requisition_regexp2 = re.compile(r'(NO)|(NUMBER)|(NO.)')
-        Project_regexp = re.compile(r'(PROJECT)')
+        Contract_regexp = re.compile(r'(CONTRACT)|(CONIRACT)|(Contract)')
+        Contract_regexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)|(no.)|(No.)')
+        Date_regexp = re.compile(r'(EFFECTIVE)|(EFFECIVE)|(Effective)')
+        Date_regexp2 = re.compile(r'(DATE)|(DAIE)|(Date)')
+        Rating_regexp = re.compile(r'(RATING)|(RAIING)|(Rating)')
+        Requisition_regexp = re.compile(r'(PURCHASE)|(REQUISITION)|(Requisition)|(Purchase)')
+        Requisition_regexp2 = re.compile(r'(NO)|(NUMBER)|(NO.)|(No.)')
+        Project_regexp = re.compile(r'(PROJECT)|(Project)')
         Project_regexp2 = re.compile(r'(NO)|(NUMBER)')
-        Issued_regexp = re.compile(r'(ISSUED)')
-        Issued_regexp2 = re.compile(r'(BY)|(8Y)')
-        Admin_regexp = re.compile(r'(ADMINISTERED)')
-        Admin_regexp2 = re.compile(r'(BY)|(8Y)')
+        Issued_regexp = re.compile(r'(ISSUED)|(Issued)')
+        Issued_regexp2 = re.compile(r'(BY)|(8Y)|(By)')
+        Admin_regexp = re.compile(r'(ADMINISTERED)|(Administered)')
+        Admin_regexp2 = re.compile(r'(BY)|(8Y)|(By)')
         if Rating_regexp.search(element[1][0]) :
                 names.append(element[1][0])
+                if len(element[1][0].lower().split('rating'))>1:
+                    rating=element[1][0].lower().split('rating')[1]
+
                 boxes.append([element[0], 'rating'])
         if Contract_regexp.search(element[1][0]) and Contract_regexp2.search(element[1][0]):
-            if ('2') in element[1][0]:
+            if (('2') in element[1][0]) or (('2.') in element[1][0]):
                 names.append(element[1][0])
                 boxes.append([element[0], 'contract_number'])
         if Date_regexp.search(element[1][0]) and Date_regexp2.search(element[1][0]):
@@ -50,7 +54,7 @@ def get_key_boxes(result):
 
     #returning boxes list having coordinates of all key values with their name like given below list
     # [[[651.0, 133.0], [815.0, 133.0], [815.0, 156.0], [651.0, 156.0]],effective_date]
-    return boxes,names
+    return boxes,names,rating
 
 
 def get_first_page(result):
@@ -58,10 +62,10 @@ def get_first_page(result):
     my_dict={'contract_number':'','effective_date':'','requisition/purchase_number':'','rating':'','issued_by':'',
              'administered_by':'','standard_form':'','project_number':''}
     # getting boxes for all key values with their names
-    boxes, names = get_key_boxes(result)
+    boxes, names,rating = get_key_boxes(result)
     # iterating over a result from OCR and saving a form type
-
-
+    if rating!='':
+        my_dict['rating']=rating
     issued_text = []
     admin_text = []
     issuedx_coordinate = ''
@@ -101,6 +105,8 @@ def get_first_page(result):
                         if len(splited) == 2:
                             if splited[0] == 'CODE':
                                 issue_code = "CODE: " + splited[1].replace('|', '')
+                            elif splited[0] == 'Code':
+                                issue_code = "CODE: " + splited[1].replace('|', '')
                         if issue_code == '':
                             issued_string = result[present + 2][1][0]
                             digit = 0
@@ -110,6 +116,7 @@ def get_first_page(result):
                             if digit >= 3 or len(issued_string.split(' ')) == 1:
                                 issued_string = issued_string.replace('|', '')
                                 issue_code = 'CODE: ' + issued_string
+
 
             # defining different x and y coordinates for different keys
             if str(i[1]) == 'requisition/purchase_number':
@@ -122,9 +129,10 @@ def get_first_page(result):
                 x_coordinate=150
                 y_coordinate=60
             # checking value which matches algo on coordinates
-            if (0 <= (r[0][0][1] - i[0][0][1]) < y_coordinate) and -20 <= (r[0][0][0] - i[0][0][0]) < x_coordinate and r[1][0] not in names:
+            if (-10 <= (r[0][0][1] - i[0][0][1]) < y_coordinate) and -20 <= (r[0][0][0] - i[0][0][0]) < x_coordinate and r[1][0] not in names:
                 value=r[1][0]
                 if i[1] != 'issued_by' and i[1] != 'administered_by':
+
                     # getting values below the key value boxes and save them to json
                     if i[1]=='effective_date':
                         value = value.replace('Mby', 'May')
@@ -165,6 +173,7 @@ def get_first_page(result):
         my_dict['standard_form'] = 'STANDARD FORM 26'
 
     return my_dict
+
 
 
 
@@ -362,8 +371,138 @@ def get_clauses(pdf_path):
             clauses_new_list.append(updated_clause)
     if len(clauses_new_list)>2:
         clauses_new_list=list(set(clauses_new_list))
+    if len(clauses_new_list)==0:
+        clauses_new_list=get_clauses_method2(pdf_path)
     return clauses_new_list
 
+def get_clauses_method2(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        NumPages = len(pdf.pages)
+        clauses_list = []
+        Months_list = ['random_x', 'JAN', 'FEB', 'MAR', "APR", 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+        # Extract text and do the search
+        for i in range(2, NumPages):
+            Text = pdf.pages[i].extract_text()
+            Text = Text.replace('DFARS', '')
+            Text = Text.replace('FAR', '')
+            #matching clauses pattern to get relevant line
+            NumRegex = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}', flags=0)
+            array = NumRegex.search(Text)
+            array_length = NumRegex.findall(Text)
+            #after matching pattern applied multiple conditions to extract clauses
+
+            try:
+                if array.group():
+                    NumRegex2 = re.compile(r'\d{4}', flags=0)
+                    NumRegex3 = re.compile(r'\d{4}-\d{2}', flags=0)
+                    lines = Text.split('\n')
+                    for line in lines:
+                        actual_line=line
+                        if line[0]==' ':
+                            line=line[1:]
+                        if len(line.split(' ')[0])<=5:
+                            line=' '.join(line.split(' ')[1:])
+                        line=line.strip()
+                        splited_line = line.split(' ')
+                        try:
+                            next_line = lines[lines.index(line) + 1]
+                            splited_next_line = next_line.strip().split(' ')
+                        except:
+                            pass
+                        try:
+                            third_line = lines[lines.index(next_line) + 1]
+                            splited_third_line = third_line.strip().split(' ')
+                        except:
+                            pass
+
+                        if NumRegex.search(splited_line[0]) and NumRegex2.search(splited_next_line[-1]):
+                            if not NumRegex2.search(splited_line[-1]):
+                                line = line + ' ' + next_line
+                                if len(line) > 20:
+                                    line = line.strip()
+                                    line = line.replace('(', '')
+                                    line = line.replace(')', '')
+                                    new_split_line = line.split(' ')
+                                    if new_split_line[-2] in Months_list:
+                                        new_split_line[-2] = new_split_line[-1] + '-' + str(Months_list.index(new_split_line[-2]))
+                                        new_split_line = new_split_line[:-1]
+                                        line = ' '.join(new_split_line)
+                                    if '/' in new_split_line[-1]:
+                                        month = new_split_line[-1].split('/')[0]
+                                        year = new_split_line[-1].split('/')[2]
+                                        new_split_line[-1] = year + '-' + month
+                                        line = ' '.join(new_split_line)
+                                    clauses_list.append(line)
+                        if NumRegex.search(splited_line[0]) and NumRegex2.search(splited_third_line[-1]):
+                            if (not NumRegex2.search(splited_line[-1])) and (not NumRegex2.search(splited_next_line[-1])):
+                                line = line + ' ' + next_line +' '+third_line
+                                if len(line) > 20:
+                                    line = line.strip()
+                                    line = line.replace('(', '')
+                                    line = line.replace(')', '')
+                                    new_split_line = line.split(' ')
+                                    if new_split_line[-2] in Months_list:
+                                        new_split_line[-2] = new_split_line[-1] + '-' + str(Months_list.index(new_split_line[-2]))
+                                        new_split_line = new_split_line[:-1]
+                                        line = ' '.join(new_split_line)
+                                    if '/' in new_split_line[-1]:
+                                        month = new_split_line[-1].split('/')[0]
+                                        year = new_split_line[-1].split('/')[1]
+                                        new_split_line[-1] = year + '-' + month
+                                        line = ' '.join(new_split_line)
+                                    clauses_list.append(line)
+
+                        if NumRegex.search(splited_line[0]) and (NumRegex2.search(splited_line[-1])):
+                            second_string = False
+                            try:
+                                next_string = lines[lines.index(actual_line) + 1]
+                                next_string_split = next_string.split(' ')
+                                if len(line) >= 50 and len(array_length) > 3:
+                                    if (not NumRegex.search(next_string_split[0])) and  (not NumRegex.search(next_string_split[1])):
+                                        second_string = True
+                            except:
+                                pass
+                            if len(line) > 20:
+                                line = line.replace('(', '')
+                                line = line.replace(')', '')
+                                new_split_line = line.split(' ')
+                                if new_split_line[-2] in Months_list:
+                                    new_split_line[-2] = new_split_line[-1] + '-' + str(Months_list.index(new_split_line[-2]))
+                                    new_split_line = new_split_line[:-1]
+                                    line = ' '.join(new_split_line)
+                                if '/' in new_split_line[-1]:
+                                    month = new_split_line[-1].split('/')[0]
+                                    year = new_split_line[-1].split('/')[1]
+                                    new_split_line[-1] = year + '-' + month
+                                    line = ' '.join(new_split_line)
+                                if second_string==True:
+                                    line=line.split(' ')
+                                    line=' '.join(line[0:-1])+' '+next_string+' '+line[-1]
+                                clauses_list.append(line)
+
+                        if NumRegex.search(splited_line[0]) and (NumRegex3.search(splited_line[-1])):
+                            if len(line.split(' ')) == 2:
+                                line = splited_line[0] + ' ' + lines[lines.index(line) - 1] + ' ' + lines[lines.index(line) + 1] + ' ' + splited_line[-1]
+                                clauses_list.append(line)
+
+            except Exception as e:
+                pass
+
+    #changing clauses format
+    clauses_new_list = []
+    for clauses in clauses_list:
+        splited_clause = clauses.split(' ')
+        if splited_clause[-1][5:] in Months_list:
+            splited_clause[-1]=splited_clause[-1][0:4]+'-'+str(Months_list.index(splited_clause[-1][5:]))
+        if len(splited_clause[-1].split('-'))==2 and '.' not in splited_clause[-1] :
+            alpharemoval = re.sub(r'\s*[A-Za-z]+\b', '', splited_clause[-1])
+            splited_clause[-1] = alpharemoval.rstrip()
+            updated_clause = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
+            clauses_new_list.append(updated_clause)
+    if len(clauses_new_list)>2:
+        clauses_new_list=list(set(clauses_new_list))
+    return clauses_new_list
 
 def mains26(pdf_path,result):
     # for getting data from first_page
