@@ -13,7 +13,7 @@ Above command will run Fast api app. Dont forget to add /upload-file/ with your 
 
 # Run it through Docker
 
-## run below ccommands:
+## run below commands:
 docker build --tag <your_image_name> .
 docker build --tag python-docker .
 (you can replace python-docker with your custome name for image)
