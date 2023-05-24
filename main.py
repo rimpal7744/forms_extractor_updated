@@ -19,39 +19,43 @@ async def create_upload_file(file: UploadFile = File(...)):
     file_location = f"{(str(uuid.uuid1())+'.pdf')}"
     with open(file_location, "wb+") as file_object:
         file_object.write(file.file.read())
-    print(file_location)
     images = convert_from_path(file_location,last_page=1)
     pix = np.array(images[0])
     result = ocr.ocr(pix, cls=True)
     result = result[0]
+
     #Different regex to detect which form it is
     form30regexp = re.compile(r'(FORM 30)|(FORM30)')
     form33regexp = re.compile(r'(FORM 33)|(FORM33)')
     form26regexp = re.compile(r'(FORM 26)|(FORM26)|(FORM 25)|(FORM25)|(Form 26)|(Form 25)')
-    #
+
     Parse=False
     final_result={}
-    #checking form type and implement method accordingly
+    form_type=''
     for line in result:
-        if form26regexp.search(line[1][0]):
-            print('26form')
-            final_result=mains26(file_location,result)
-            Parse=True
-            break
+        if 'STANDARD FORM' in str(line[1][0]).upper() :
+            form_type=str(line[1][0])
+    #checking form type and implement method accordingly
 
-        elif form30regexp.search(line[1][0]):
-            print('30form')
-            final_result=mains30(result)
-            Parse=True
-            break
+    if form26regexp.search(form_type):
+        print('26form')
+        final_result=mains26(file_location,result)
+        Parse=True
 
-        elif form33regexp.search(line[1][0]):
-            print('33form')
-            final_result=main(file_location,result)
-            Parse=True
-            break
-        else:
-            pass
+    elif form30regexp.search(form_type):
+        print('30form')
+        final_result=mains30(result)
+        Parse=True
+
+    elif form33regexp.search(form_type) :
+        print('33form')
+        final_result=main(file_location,result)
+        Parse=True
+
+    else:
+        pass
+
+    
     #in some cases form type not detected in sf30, this execution will take place
     if Parse==False:
         for line in result:
