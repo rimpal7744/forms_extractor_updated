@@ -7,116 +7,192 @@ import camelot
 
 
 
+def get_key_boxes(result):
+    #match regex for all key values from OCR result and get their boxes
+    boxes=[]
+    #to append names given in forms for key values
+    names=[]
+    actual_names=[]
+    for element in result:
+        #all regex matching for keys respectively
+        Contract_regexp = re.compile(r'(CONTRACT)|(CONIRACT)|(CONTRACI)|(CONTRA CT)')
+        Contract_regexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
+        Date_regexp = re.compile(r'(DAIE)|(DATE)')
+        Date_regexp2 = re.compile(r'(ISSUED)')
+        Rating_regexp = re.compile(r'(RATING)|(RAIING)')
+        Email_regexp = re.compile(r'(E-MAIL ADDRESS)|(E-MAILADDRESS)')
+        Email_regexp2 = re.compile(r'(C)|(C.)')
+        Requisition_regexp = re.compile(r'(REQUISITION)|(SOLICITAIION)')
+        Requisition_regexp2 = re.compile(r'(NUMBER)|(NO.)|(NO)')
+        Solicitation_regexp = re.compile(r'(SOLICITATION)|(SOLICITAIION)')
+        Solicitation_regexp2 = re.compile(r'(NO)|(NUMBER)|(NO.)')
+        Solicitation_type_regexp = re.compile(r'(SOLICITATION)')
+        Solicitation_type_regexp2 = re.compile(r'(TYPE)')
+        Amendmentno_regexp = re.compile(r'(AMENDMENT)')
+        Amendmentno_regexp2 = re.compile(r'(NO)|(NUMBER)')
+        Award_amount_regexp = re.compile(r'(AMOUNT)')
+        Award_amount_regexp2 = re.compile(r'(20)')
+        Award_date_regexp = re.compile(r'(AWARDDAIE)|(AWARDDATE)|(AWARD DATE)')
+        Award_date_regexp2 = re.compile(r'(28)|(28.)')
+        Offer_date_regexp = re.compile(r'(OFFERDATE)|(OFFERDAIE)|(OFFER DATE)')
+        Offer_date_regexp2 = re.compile(r'(18)|(18.)')
+        Area_code_regexp = re.compile(r'(AREA CODE)|(area_code)')
+        Extension_regexp = re.compile(r'(EXTENSION)')
+        Name_regexp = re.compile(r'(NAME)|(name)')
+        Name_regexp2 = re.compile(r'(A.)|(A)')
+        Name_regexp3 = re.compile(r'(FOR INFORMATION)')
+        Telephone_regexp = re.compile(r'(B. TELEPHONE)|(B.TELEPHONE)')
+        Telephone_regexp2 = re.compile(r'(Include)')
+        number_regexp = re.compile(r'(INUMBER)')
+        if Rating_regexp.search(element[1][0]) :
+            if 'rating' not in actual_names:
+                names.append(element[1][0])
+                actual_names.append('rating')
+                boxes.append([element[0], 'rating'])
+        if Contract_regexp.search(element[1][0]) and Contract_regexp2.search(element[1][0]):
+            if ('2') in element[1][0]:
+                if 'contract_number' not in actual_names:
+                    names.append(element[1][0])
+                    actual_names.append('contract_number')
+                    boxes.append([element[0], 'contract_number'])
+        if Date_regexp.search(element[1][0]) and Date_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'date_issued'])
+        if Requisition_regexp.search(element[1][0]) and Requisition_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'requisition/purchase_number'])
+        if Solicitation_regexp.search(element[1][0]) and Solicitation_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'solicitation_number'])
+        if Solicitation_type_regexp.search(element[1][0]) and Solicitation_type_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'solicitation_type'])
+        if Amendmentno_regexp.search(element[1][0]) and Amendmentno_regexp2.search(element[1][0]):
+            if '14' not in element[1][0]:
+                names.append(element[1][0])
+                boxes.append([element[0], 'amendment_no'])
+        if Award_date_regexp.search(element[1][0]) and Award_date_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'award_date'])
+        if Offer_date_regexp.search(element[1][0]) and Offer_date_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'offer_date'])
+        if Award_amount_regexp.search(element[1][0]) and Award_amount_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'award_amount'])
+        if Email_regexp.search(element[1][0]) and Email_regexp2.search(element[1][0]):
+            names.append(element[1][0])
+            boxes.append([element[0], 'email'])
+        if Name_regexp.search(element[1][0]) and Name_regexp2.search(element[1][0]):
+            if 'name' not in actual_names:
+                if not Name_regexp3.search(element[1][0]):
+                    names.append(element[1][0])
+                    actual_names.append('name')
+                    boxes.append([element[0], 'first_name'])
+                elif  Name_regexp3.search(element[1][0]):
+                    names.append(element[1][0])
+                    actual_names.append('name')
+                    boxes.append([element[0], 'second_name'])
+        if Area_code_regexp.search(element[1][0]):
+            if 'area_code' not in actual_names:
+                names.append(element[1][0])
+                actual_names.append( 'area_code')
+                boxes.append([element[0], 'area_code'])
+        if number_regexp.search(element[1][0]):
+            if 'number' not in actual_names:
+                names.append(element[1][0])
+                actual_names.append( 'number')
+                boxes.append([element[0], 'number'])
+        if Extension_regexp.search(element[1][0]):
+            if 'extension' not in actual_names:
+                names.append(element[1][0])
+                actual_names.append('extension')
+                boxes.append([element[0], 'extension'])
+        if Telephone_regexp.search(element[1][0]) and Telephone_regexp2.search(element[1][0]):
+            if 'full_number' not in actual_names:
+                names.append(element[1][0])
+                actual_names.append( 'full_number')
+                boxes.append([element[0], 'full_number'])
+        if element[1][0]=='DATE':
+            names.append(element[1][0])
+            boxes.append([element[0], 'date'])
+    #returning boxes list having coordinates of all key values with their name like given below list
+    # [[[651.0, 133.0], [815.0, 133.0], [815.0, 156.0], [651.0, 156.0]],effective_date]
+    return boxes,names
+
+
 def get_first_page(result):
 
     my_dict = {'contract_number': '', 'solicitation_number': '', 'solicitation_type': '', 'date_issued': '',
-               'requisition/purchase_number': '', 'email': '', 'rating': '', 'area_code': '', 'extension': '',
-               'number': '','amendment_no': [], 'date': [], 'award_date': '', 'award_amount': '', 'offer_date': ''}
+               'requisition/purchase_number': '', 'email': '', 'rating': '','name':'', 'area_code': '', 'extension': '',
+               'number': '','amendment_no': [], 'date': [], 'award_date': '', 'award_amount': '', 'offer_date': '','full_number':''}
 
-    all_keys=['2 CONTRACINO','3 SOLICITATIONNO','2. CONTRA CT NO.',' 5 DAIE ISSUED','2. CONTRACT NUMBER','3. SOLICITATION NUMBER','5. DATE ISSUED','2. CONTRACT NO.','3. SOLICITATION NO.','5.DATE ISSUED','RATING','6. REQUISITION/PURCHASE NUMBER','6 REQUISITION P URCHASE NO','6.RE QUISITION/P URCHASE NO.','A. NAME'
-        ,'C. E-MAIL ADDRESS','AREA CODE','AMENDMENT NO.','AMENDMENT NO','INUMBER','EXTENSION','DATE','20. AMOUNT','28. AWARD DATE','4. TYPE OF SOLICITATION','4 TYPE OF SOLICITATION|','[4. TYPE OF SOLICITATION','20 AMOUNT',
-        '28 AWARDDAIE','28 AWARDDATE','18. OFFERDATE','18 OFFERDATE','18. OFFER DATE']
-
+    boxes, names = get_key_boxes(result)
     amendments=[]
-    boxes = []
     dates_list=[]
     # iterating over a result from OCR and saving box which have value from all_keys
     for line in result:
         if 'STANDARD FORM' in str(line[1][0]):
             my_dict['standard_form']=str(line[1][0])
-        if str(line[1][0]) in all_keys:
-            line[0][2][1] = line[0][2][1] + 5
-            line[0][3][1] = line[0][3][1] + 50
-            boxes.append([line[0],line[1][0]])
-
 
     for r in result:
         for i in boxes:
-            amend_list = ['AMENDMENT NO.','AMENDMENT NO']
-            datelist = ['DATE']
-            if i[1] in amend_list:
-                if r[1][0] not in all_keys and (0<=(r[0][0][1]-i[0][0][1])<80) and 0<=(i[0][0][0]-r[0][0][0])<80:
+            if i[1]=='amendment_no':
+                y=50
+                x=50
+                if (0 <= (r[0][0][1] - i[0][0][1]) < y) and -80 <= (r[0][0][0] - i[0][0][0]) < x and r[1][0] not in names:
                     amendments.append(r[1][0])
-                    my_dict['amendment_no']=amendments
-            if i[1] in datelist:
-                if r[1][0] not in all_keys and (0 <= (r[0][0][1] - i[0][0][1]) < 80) and 0 <= (i[0][0][0] - r[0][0][0]) < 80:
+                    my_dict[i[1]]=amendments
+            elif i[1]=='date':
+                x=50
+                y=50
+                if (0 <= (r[0][0][1] - i[0][0][1]) < y) and -30 <= (r[0][0][0] - i[0][0][0]) < x and r[1][0] not in names:
                     dates_list.append(r[1][0])
-                    my_dict['date'] = dates_list
+                    my_dict[i[1]]=dates_list
+            elif i[1]=='second_name':
+                x=250
+                y=40
+                if (0 <= (r[0][0][1] - i[0][0][1]) < y) and 100 <= (r[0][0][0] - i[0][0][0]) < x and r[1][0] not in names:
+                    my_dict['name'] = r[1][0]
+            elif i[1]=='full_number':
+                x=80
+                y=50
+                if (0 <= (r[0][0][1] - i[0][0][1]) < y) and 0 <= (r[0][0][0] - i[0][0][0]) < x and r[1][0] not in names:
+                    my_dict['full_number'] = r[1][0]
 
-            if (0<=(r[0][0][1]-i[0][0][1])<80) and 0<=(r[0][0][0]-i[0][0][0])<80 and r[1][0] not in all_keys :
-                # lists for classifying values for matching
-                Contract_names=['2 CONTRACINO','2. CONTRACT NO.','2. CONTRACT NUMBER','2. CONTRA CT NO.']
-                Soliciation_names=['3 SOLICITATIONNO','3. SOLICITATION NUMBER','3. SOLICITATION NO.']
-                rating_names=['RATING']
-                Dates_name=['5.DATE ISSUED','5. DATE ISSUED',' 5 DAIE ISSUED']
-                Purchase_names=['6. REQUISITION/PURCHASE NUMBER','6 REQUISITION P URCHASE NO','6.RE QUISITION/P URCHASE NO.']
-                name_list=['A. NAME']
-                email_list=['C. E-MAIL ADDRESS']
-                area_list=['area_code','AREA CODE']
-                number_list=['INUMBER']
-                extension_list=['EXTENSION']
-                datelist=['DATE']
-                Soliciation_typeee = ['4. TYPE OF SOLICITATION','4 TYPE OF SOLICITATION|']
-                award_names=['20. AMOUNT','20 AMOUNT']
-                awarddate=['28. AWARD DATE','28 AWARDDAIE','28 AWARDDATE']
-                offerdate=['18. OFFERDATE','18. OFFER DATE']
+            else:
+                x=80
+                y=80
+                if (0<=(r[0][0][1]-i[0][0][1])<y) and -10<=(r[0][0][0]-i[0][0][0])<x and r[1][0] not in names :
+                    value = r[1][0]
+                    if i[1]=='first_name':
+                        my_dict['name']=value
+                    elif i[1]=='solicitation_type':
+                        if "X" not in r[1][0]:
+                            value='SEALED BID (IFB)'
+                            my_dict[i[1]] = value
+                        elif "X" in r[1][0]:
+                            value='NEGOTIATED (RFP)'
+                            my_dict[i[1]]=value
+                    elif i[1]=='award_date':
+                        value=r[1][0].replace('Mby','May')
+                        my_dict[i[1]] = value
 
-                answer=r[1][0]
-                if str(i[1]) in Contract_names:
-                    name='contract_number'
-                elif str(i[1]) in Soliciation_names:
-                    name='solicitation_number'
-                elif str(i[1]) in Dates_name:
-                    name='date_issued'
-                elif str(i[1]) in Purchase_names:
-                    name='requisition/purchase_number'
-                elif  str(i[1]) in name_list:
-                    name='name'
-                elif str(i[1]) in email_list:
-                    name='email'
-                elif str(i[1]) in area_list:
-                    name='area_code'
-                elif str(i[1]) in extension_list:
-                    name='extension'
-                elif str(i[1]) in number_list:
-                    name='number'
-                elif str(i[1]) in Soliciation_typeee:
-                    name = 'solicitation_type'
-                    answer = (str(r[1][0]).split(' ', 1))[1]
-                    if answer[-1]=='P':
-                        answer=answer+')'
-                elif str(i[1]) in award_names:
-                    name='award_amount'
-                elif str(i[1]) in rating_names:
-                    name='rating'
-                elif str(i[1]) in datelist:
-                    dates_list.append(r[1][0])
-                elif str(i[1]) in awarddate:
-                    name='award_date'
-                elif str(i[1]) in offerdate:
-                    name='offer_date'
-                else:
-                    end_name=str(i[1]).lower()
-                    end_name.replace(' ','_')
-                    name=end_name
-                if name=='amendment_no':
-                    my_dict[name] = amendments
-                elif name=='date':
-                    my_dict[name]=dates_list
-                elif name=='award_date':
-                    answer = r[1][0].replace('Mby', 'May')
-                    my_dict[name]=answer
-                else:
-                    my_dict[name]=answer
+                    else:
+                        # lists for classifying values for matching
+                        my_dict[i[1]] = value
 
-                break
-
+    if my_dict['full_number']!='':
+        my_dict['number']=my_dict['full_number']
+        my_dict.pop('full_number', None)
+    elif my_dict['full_number']=='':
+        my_dict.pop('full_number', None)
+    if 'CALL' in my_dict['name']:
+        my_dict['name']=''
     return my_dict
 
 
-
-def get_tables_pages(pdf_path):
-    #for getting page numbers having line item tables and also method to manupulate data
+def get_tabless_pages(pdf_path):
     method = ''
     with pdfplumber.open(pdf_path) as pdf:
         # Get number of pages
@@ -128,31 +204,33 @@ def get_tables_pages(pdf_path):
         String5="Supplies/Service"
         string6="MAX UNIT"
         # Extract text and do the search for checking method and pages
-        table_pages=[]
+        table_pagess=[]
         for i in range(0, NumPages):
             Text = pdf.pages[i].extract_text()
             if re.search(String,Text):
                 if re.search(string6,Text):
                     method='third'
-                    table_pages.append(i)
+                    table_pagess.append(i)
             if re.search(String,Text):
                 if re.search(String2,Text):
                     method='first'
-                    table_pages.append(i)
+                    table_pagess.append(i)
             if re.search(String3, Text) and re.search(String4, Text) and re.search(String5,Text):
                 method='second'
-                table_pages.append(i)
-    if len(table_pages)>2:
-        table_pages.append(table_pages[-1]+1)
-    return table_pages,method
+                table_pagess.append(i)
+        if len(table_pagess)>0 :
+            if method=='first' or method=='third':
+                table_pagess.append(table_pagess[-1]+1)
+
+    return table_pagess,method
 
 
-def method1(pdf_path,pages):
-    all_pages=','.join(str(v) for v in pages)
-    items = []
+def first_method(pdf_path,pagess):
+    pagesss=','.join(str(v) for v in pagess)
+    itemss = []
     try:
-        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=all_pages)
-        second_method=False
+        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=pagesss)
+        seconddd=False
         for table in tables:
             try:
                 index_change=False
@@ -161,21 +239,22 @@ def method1(pdf_path,pages):
                     df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'AMOUNT']
                 except:
                     df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'AMOUNT']
-                    second_method=True
-                index1 = df.loc[df['ITEM NO'] == 'ITEM NO'].index
-                if len(index1) == 0:
-                    index1 = df.loc[df['ITEM NO'] == 'ITEM NO \nSUPPLIES/SERVICES'].index
+                    seconddd=True
+                indexxx = df.loc[df['ITEM NO'] == 'ITEM NO'].index
+                if len(indexxx) == 0:
+                    indexxx = df.loc[df['ITEM NO'] == 'ITEM NO \nSUPPLIES/SERVICES'].index
                     index_change = True
                 count = 0
-                for i in index1:
+                for i in indexxx:
                     dff = df.iloc[i + 1]
 
-                    if second_method==True:
-                        split_units = dff['UNIT'].split('\n')
-                        if len(split_units) > 1:
-                            dff['UNIT PRICE'] = split_units[1]
+                    if seconddd==True:
+                        sss = dff['UNIT'].split('\n')
+                        if len(sss) > 1:
+                            dff['UNIT PRICE'] = sss[1]
                         else:
                             dff['UNIT PRICE'] = ''
+
                     if index_change == True:
                         data_change = [dff['SUPPLIES/SERVICES'], dff['QUANTITY'], dff['UNIT']]
                         dff['QUANTITY'] = data_change[0]
@@ -184,48 +263,46 @@ def method1(pdf_path,pages):
                     json1 = dff.to_json()
                     aDict = json.loads(json1)
 
-                    if index1[-1] == i:
+                    if indexxx[-1] == i:
                         full_text = []
-                        target_df = df.iloc[(i + 2):]
-                        for index, row in target_df.iterrows():
+                        ccc = df.iloc[(i + 2):]
+                        for index, row in ccc.iterrows():
                             full_text.append(row['SUPPLIES/SERVICES'])
                             full_text.append(row['QUANTITY'])
                         str1 = ''.join(full_text)
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
-                        supplies_clauses = name.findall(str1)
+                        array = name.findall(str1)
                         aDict['SUPPLIES/SERVICES'] = str1
-                        aDict['Clauses'] = supplies_clauses
-                        items.append(aDict)
+                        aDict['Clauses'] = array
+                        itemss.append(aDict)
                         count += 1
                     else:
                         full_text = []
-                        target_df = df.iloc[i + 2:index1[count + 1] - 1]
-                        for index, row in target_df.iterrows():
+                        ccc = df.iloc[i + 2:indexxx[count + 1] - 1]
+                        for index, row in ccc.iterrows():
                             full_text.append(row['SUPPLIES/SERVICES'])
                             full_text.append(row['QUANTITY'])
+
                         str1 = ''.join(full_text)
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
-                        supplies_clauses = name.findall(str1)
+                        array = name.findall(str1)
                         count += 1
                         aDict['SUPPLIES/SERVICES'] = str1
-                        aDict['Clauses'] = supplies_clauses
-                        items.append(aDict)
+                        aDict['Clauses'] = array
+                        itemss.append(aDict)
 
             except:
                 pass
     except:
         pass
-
-    #returning all line items
-    return items
+    return itemss
 
 
 def method2(pdf_path,pages):
-    items=[]
+    itemss_list=[]
     for p in pages:
-        start_page=p
-        end_page=start_page+10
-        df = tabula.read_pdf(pdf_path, pages=str(start_page)+'-'+str(end_page),stream=True)
+        pp=p+10
+        df = tabula.read_pdf(pdf_path, pages=str(p)+'-'+str(pp),stream=True)
         tables_list = []
         tables = df
         count = 0
@@ -235,56 +312,56 @@ def method2(pdf_path,pages):
                 if count == 0:
                     value = t.columns
                     t.columns = value
-                    supplies_list = t['Supplies/Service'].values.tolist()
-                    data.append(' '.join(str(v) for v in supplies_list))
+                    ff = t['Supplies/Service'].values.tolist()
+                    data.append(' '.join(str(v) for v in ff))
                     t.drop('Supplies/Service', axis=1, inplace=True)
                     t.dropna(axis=0, how='all', inplace=True)
                     count += 1
                     tables_list.append(t)
                 else:
                     t.columns = value
-                    supplies_list = t['Supplies/Service'].values.tolist()
-                    data.append(' '.join(str(v) for v in supplies_list))
+                    ff = t['Supplies/Service'].values.tolist()
+                    data.append(' '.join(str(v) for v in ff))
                     t.drop('Supplies/Service', axis=1, inplace=True)
                     t.dropna(axis=0, how='all', inplace=True)
                     tables_list.append(t)
             except:
                 pass
-    supplies_data = '.'.join(data)
+    d = '.'.join(data)
     new_list = []
-    supplies_data = supplies_data.replace('Firm Fixed Price', 'Firm Fixed Price fffff')
-    supplies_data = supplies_data.replace('Cost No Fee', 'Cost No Fee fffff')
-    supplies_data = supplies_data.split('fffff')
+    d = d.replace('Firm Fixed Price', 'Firm Fixed Price fffff')
+    d = d.replace('Cost No Fee', 'Cost No Fee fffff')
+    d = d.split('fffff')
     line_clauses=[]
-    for f in supplies_data:
+    for f in d:
         new_list.append(f)
         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
-        supplies_clauses = name.findall(f)
-        line_clauses.append(supplies_clauses)
+        array = name.findall(f)
+        line_clauses.append(array)
 
     dff = pd.concat(tables_list, axis=0, ignore_index=True)
-    target_df = dff.loc[pd.isna(dff["Item"]), :].index
+    vv = dff.loc[pd.isna(dff["Item"]), :].index
 
-    for target in target_df:
-        if pd.notnull(dff['Unit Price'][target]):
-            if pd.notnull(dff['Unit Price'][target - 1]):
-                dff.iloc[target - 1, 3] = str(dff.iloc[target - 1, 3]) + ' ' + str(dff.iloc[target, 3])
-            if pd.isnull(dff['Unit Price'][target - 1]):
-                dff.iloc[target - 1, 3] = str(dff.iloc[target, 3])
-        if pd.notnull(dff['Amount'][target]):
-            if pd.notnull(dff['Amount'][target + 1]):
-                dff.iloc[target + 1, 4] = str(dff.iloc[target, 4]) + '\n' + str(dff.iloc[target + 1, 4])
-            elif pd.isnull(dff['Amount'][target + 1]):
-                dff.iloc[target + 1, 4] = str(dff.iloc[target, 4])
+    for v in vv:
+        if pd.notnull(dff['Unit Price'][v]):
+            if pd.notnull(dff['Unit Price'][v - 1]):
+                dff.iloc[v - 1, 3] = str(dff.iloc[v - 1, 3]) + ' ' + str(dff.iloc[v, 3])
+            if pd.isnull(dff['Unit Price'][v - 1]):
+                dff.iloc[v - 1, 3] = str(dff.iloc[v, 3])
+        if pd.notnull(dff['Amount'][v]):
+            if pd.notnull(dff['Amount'][v + 1]):
+                dff.iloc[v + 1, 4] = str(dff.iloc[v, 4]) + '\n' + str(dff.iloc[v + 1, 4])
+            elif pd.isnull(dff['Amount'][v + 1]):
+                dff.iloc[v + 1, 4] = str(dff.iloc[v, 4])
 
     dff.dropna(thresh=2, axis=0, inplace=True)
     dff['Supplies/Services'] = new_list
     dff['Clauses'] = line_clauses
-    items_json=dff.to_json(orient="index")
-    items_json=json.loads(items_json)
-    for it in items_json:
-        items.append(items_json[str(it)])
-    for i in items:
+    itemsss=dff.to_json(orient="index")
+    itemsss=json.loads(itemsss)
+    for it in itemsss:
+        itemss_list.append(itemsss[str(it)])
+    for i in itemss_list:
         item_value=str(int(i['Item']))
         item_value_updated = item_value
         if len(item_value)==1:
@@ -295,54 +372,58 @@ def method2(pdf_path,pages):
             item_value_updated='0'+item_value
         i['Item']=item_value_updated
 
-    return items
+    return itemss_list
 
 
-def method3(pdf_path,pages):
-    all_pages=','.join(str(v) for v in pages)
-    items = []
+def third_method(pdf_path,pagess):
+    pagesss=','.join(str(v) for v in pagess)
+    itemss = []
     try:
-        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=all_pages)
+        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=pagesss)
         for table in tables:
-            df = table.df
-            df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'AMOUNT']
-            index1 = df.loc[df['ITEM NO'] == 'ITEM NO'].index
+            try:
+                df = table.df
+                df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'AMOUNT']
+                indexxx = df.loc[df['ITEM NO'] == 'ITEM NO'].index
 
-            count = 0
-            for i in index1:
-                dff = df.iloc[i + 2]
-                json1 = dff.to_json()
-                aDict = json.loads(json1)
-                if index1[-1] == i:
-                    full_text = []
-                    target_df = df.iloc[(i + 2):]
-                    for index, row in target_df.iterrows():
-                        full_text.append(row['SUPPLIES/SERVICES'])
-                    str1 = ''.join(full_text)
-                    aDict['SUPPLIES/SERVICES'] = str1
-                    name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
-                    supplies_clauses = name.findall(str1)
-                    aDict['Clauses'] = supplies_clauses
-                    items.append(aDict)
-                    count += 1
-                else:
-                    full_text = []
-                    target_df = df.iloc[i + 2:index1[count + 1] - 1]
-                    for index, row in target_df.iterrows():
-                        full_text.append(row['SUPPLIES/SERVICES'])
-                    str1 = ''.join(full_text)
-                    count += 1
-                    name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
-                    supplies_clauses = name.findall(str1)
-                    aDict['SUPPLIES/SERVICES'] = str1
-                    aDict['Clauses'] = supplies_clauses
-                    items.append(aDict)
+                count = 0
+                for i in indexxx:
+                    dff = df.iloc[i + 2]
+                    json1 = dff.to_json()
+                    aDict = json.loads(json1)
+                    if indexxx[-1] == i:
+                        full_text = []
+                        ccc = df.iloc[(i + 2):]
+                        for index, row in ccc.iterrows():
+                            full_text.append(row['SUPPLIES/SERVICES'])
+                        str1 = ''.join(full_text)
+                        aDict['SUPPLIES/SERVICES'] = str1
+                        name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
+                        array = name.findall(str1)
+                        aDict['Clauses'] = array
+                        itemss.append(aDict)
+                        count += 1
+                    else:
+                        full_text = []
+                        ccc = df.iloc[i + 2:indexxx[count + 1] - 1]
+                        for index, row in ccc.iterrows():
+                            full_text.append(row['SUPPLIES/SERVICES'])
+                        str1 = ''.join(full_text)
+                        count += 1
+                        name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
+                        array = name.findall(str1)
+                        aDict['SUPPLIES/SERVICES'] = str1
+                        aDict['Clauses'] = array
+                        itemss.append(aDict)
+            except:
+                pass
 
     except:
         pass
-    return items
 
-def get_clauses(pdf_path):
+    return itemss
+
+def get_clausess(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
         #get number of pages
         NumPages = len(pdf.pages)
@@ -354,119 +435,119 @@ def get_clauses(pdf_path):
             Text = pdf.pages[i].extract_text()
             NumRegex = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}', flags=0)
             array = NumRegex.search(Text)
-            array_length = NumRegex.findall(Text)
-
+            lenarray = NumRegex.findall(Text)
+            #if pattern match then implementing various algos
             try:
-                # if pattern match then implementing various algos
                 if array.group():
                     NumRegex2 = re.compile(r'\d{4}', flags=0)
                     NumRegex3 = re.compile(r'\d{4}-\d{2}', flags=0)
-                    lines = Text.split('\n')
-                    for line in lines:
-                        third_string = False
-                        current_line_split = line.split(' ')
+                    gg = Text.split('\n')
+                    for g in gg:
+                        third = False
+                        ggg = g.split(' ')
                         try:
-                            next_line = lines[lines.index(line) + 1]
-                            next_line_split=next_line.split(' ')
+                            next_linee = gg[gg.index(g) + 1]
+                            nn=next_linee.split(' ')
                         except:
                             pass
+                        ccc=''
+                        if NumRegex.search(ggg[0]) and NumRegex2.search(nn[-1]):
+                            if not NumRegex2.search(ggg[-1]):
+                                ccc = g + ' ' + next_linee
+                                if len(ccc) > 20:
+                                    ccc = ccc.replace('(', '')
+                                    ccc = ccc.replace(')', '')
+                                    yy = ccc.split(' ')
+                                    if yy[-2] in Months_list:
+                                        yy[-2] = yy[-1] + '-' + str(Months_list.index(yy[-2]))
+                                        yy = yy[:-1]
+                                        g = ' '.join(yy)
+                                    if '/' in yy[-1]:
+                                        month = yy[-1].split('/')[1]
+                                        year = yy[-1].split('/')[2]
+                                        yy[-1] = year + '-' + month
+                                        g = ' '.join(yy)
+                                    clauses_list.append(g)
 
-                        if NumRegex.search(current_line_split[0]) and NumRegex2.search(next_line_split[-1]):
-                            if not NumRegex2.search(current_line_split[-1]):
-                                full_line = line + ' ' + next_line
-                                if len(full_line) > 20:
-                                    full_line = full_line.replace('(', '')
-                                    full_line = full_line.replace(')', '')
-                                    full_line_splited = full_line.split(' ')
-                                    if full_line_splited[-2] in Months_list:
-                                        full_line_splited[-2] = full_line_splited[-1] + '-' + str(Months_list.index(full_line_splited[-2]))
-                                        full_line_splited = full_line_splited[:-1]
-                                        line = ' '.join(full_line_splited)
-                                    if '/' in full_line_splited[-1]:
-                                        month = full_line_splited[-1].split('/')[0]
-                                        year = full_line_splited[-1].split('/')[2]
-                                        full_line_splited[-1] = year + '-' + month
-                                        line = ' '.join(full_line_splited)
-                                    clauses_list.append(line)
 
-
-                        if NumRegex.search(current_line_split[0]) and (NumRegex2.search(current_line_split[-1])) :
-                            second_string = False
+                        if NumRegex.search(ggg[0]) and (NumRegex2.search(ggg[-1])) :
+                            lennn = False
                             try:
-                                next_string=lines[lines.index(line)+1]
+                                next_index=gg[gg.index(g)+1]
 
-                                next_string_split=next_string.split(' ')
+                                nexxx=next_index.split(' ')
 
-                                if len(line)>=65 and len(array_length)>3:
-                                    if not NumRegex.search(next_string_split[0]):
-                                        second_string=True
-                                        if line!=lines[-1] or line!=lines[-2] :
-                                            third_line=lines[lines.index(line) + 2]
-                                            third_line_splited = lines[lines.index(line) + 2].split(' ')
-                                            if not NumRegex.search(third_line_splited[0]) and len(third_line_splited[0])<70 and len(array_length)>8:
-                                                third_string=True
+                                if len(g)>=65 and len(lenarray)>3:
+                                    if not NumRegex.search(nexxx[0]):
+                                        lennn=True
+                                        if g!=gg[-1] or g!=gg[-2] :
+                                            thirddd=gg[gg.index(g) + 2]
+                                            third_index = gg[gg.index(g) + 2].split(' ')
+                                            if not NumRegex.search(third_index[0]) and len(third_index[0])<70 and len(lenarray)>8:
+                                                third=True
                             except:
                                 pass
-                            if len(line)>20:
-                                line=line.replace('(','')
-                                line=line.replace(')','')
-                                splited_line=line.split(' ')
-                                if splited_line[-2] in Months_list:
-                                    splited_line[-2]=splited_line[-1]+'-'+str(Months_list.index(splited_line[-2]))
-                                    splited_line=splited_line[:-1]
-                                    line=' '.join(splited_line)
-                                if '/' in splited_line[-1]:
-                                    month=splited_line[-1].split('/')[0]
-                                    year=splited_line[-1].split('/')[2]
-                                    splited_line[-1]=year+'-'+month
-                                    line=' '.join(splited_line)
-                                if second_string==True and third_string==False:
-                                    line=line.split(' ')
-                                    line=' '.join(line[0:-1])+' '+next_string+' '+line[-1]
-                                elif second_string==True and third_string==True:
-                                    line = line.split(' ')
-                                    line = ' '.join(line[0:-1]) + ' ' + next_string +' '+third_line+ ' ' + line[-1]
-                                clauses_list.append(line)
+                            if len(g)>20:
+                                g=g.replace('(','')
+                                g=g.replace(')','')
+                                yy=g.split(' ')
+                                if yy[-2] in Months_list:
+                                    yy[-2]=yy[-1]+'-'+str(Months_list.index(yy[-2]))
+                                    yy=yy[:-1]
+                                    g=' '.join(yy)
+                                if '/' in yy[-1]:
+                                    month=yy[-1].split('/')[1]
+                                    year=yy[-1].split('/')[2]
+                                    yy[-1]=year+'-'+month
+                                    g=' '.join(yy)
+                                if lennn==True and third==False:
+                                    g=g.split(' ')
+                                    g=' '.join(g[0:-1])+' '+next_index+' '+g[-1]
+                                elif lennn==True and third==True:
+                                    g = g.split(' ')
+                                    g = ' '.join(g[0:-1]) + ' ' + next_index +' '+thirddd+ ' ' + g[-1]
+                                clauses_list.append(g)
 
-                        if NumRegex.search(current_line_split[0]) and (NumRegex3.search(current_line_split[-1])):
-                            if len(line.split(' '))==2:
-                                target_clause=current_line_split[0]+' '+lines[lines.index(line)-1]+' '+lines[lines.index(line)+1]+' '+current_line_split[-1]
-                                clauses_list.append(target_clause)
+                        if NumRegex.search(ggg[0]) and (NumRegex3.search(ggg[-1])):
+                            if len(g.split(' '))==2:
+                                cc=ggg[0]+' '+gg[gg.index(g)-1]+' '+gg[gg.index(g)+1]+' '+ggg[-1]
+                                clauses_list.append(cc)
             except Exception as e:
                 pass
 
-    clauses_new_list = []
-    for old_clause in clauses_list:
-        splited_clause = old_clause.split(' ')
-        clause_value = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
-        clauses_new_list.append(clause_value)
-
-    return clauses_new_list
-
-
-
+    clausess_new_list = []
+    for c in clauses_list:
+        cc = c.split(' ')
+        clausee = cc[0] + ' | ' + ' '.join(cc[1:-1]) + ' | ' + cc[-1]
+        clausess_new_list.append(clausee)
+    return clausess_new_list
 
 
 
 
 def main(pdf_path,result):
 
-    #getting_data_from_first_page from results getting from paddleOCR
+    #getting_data_from_first_page
     mydict=get_first_page(result)
+
     #getting method and page numbers
-    page_numbers,method=get_tables_pages(pdf_path)
+    pagess,method=get_tabless_pages(pdf_path)
+
     #different methods to get lineitems depend on method
     if method=='first':
-        all_items=method1(pdf_path,page_numbers)
-        mydict['items']=all_items
+        iteemms=first_method(pdf_path,pagess)
+        mydict['items']=iteemms
     elif method=='second':
-        all_items=method2(pdf_path,page_numbers)
-        mydict['items'] = all_items
+        iteemms=method2(pdf_path,pagess)
+        mydict['items'] = iteemms
     elif method=='third':
-        all_items=method3(pdf_path,page_numbers)
-        mydict['items']=all_items
+        iteemms=third_method(pdf_path,pagess)
+        mydict['items']=iteemms
+    elif method=='':
+        mydict['items']=[]
     #for getting clauses
-    all_clauses=get_clauses(pdf_path)
-    mydict['clauses']=all_clauses
+    clausess=get_clausess(pdf_path)
+    mydict['clauses']=clausess
     return mydict
+
 
