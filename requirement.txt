@@ -10,4 +10,4 @@ Flask~=2.2.3
 PyPDF2~=2.10.9
 paddlepaddle
 camelot-py
-tabula
+tabula-py
