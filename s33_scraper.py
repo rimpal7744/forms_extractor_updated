@@ -192,7 +192,7 @@ def get_first_page(result):
     return my_dict
 
 
-def get_tabless_pages(pdf_path):
+def get_tables_pages(pdf_path):
     method = ''
     with pdfplumber.open(pdf_path) as pdf:
         # Get number of pages
@@ -225,9 +225,9 @@ def get_tabless_pages(pdf_path):
     return table_pagess,method
 
 
-def first_method(pdf_path,pagess):
-    pagesss=','.join(str(v) for v in pagess)
-    itemss = []
+def first_method(pdf_path,pages):
+    pagesss=','.join(str(v) for v in pages)
+    items = []
     try:
         tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=pagesss)
         seconddd=False
@@ -236,30 +236,30 @@ def first_method(pdf_path,pagess):
                 index_change=False
                 df = table.df
                 try:
-                    df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'AMOUNT']
+                    df.columns = ['item', 'supplies_or_services', 'quantity', 'unit', 'unit_price', 'amount']
                 except:
-                    df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'AMOUNT']
+                    df.columns = ['item', 'supplies_or_services', 'quantity', 'unit', 'amount']
                     seconddd=True
-                indexxx = df.loc[df['ITEM NO'] == 'ITEM NO'].index
+                indexxx = df.loc[df['item'] == 'ITEM NO'].index
                 if len(indexxx) == 0:
-                    indexxx = df.loc[df['ITEM NO'] == 'ITEM NO \nSUPPLIES/SERVICES'].index
+                    indexxx = df.loc[df['item'] == 'ITEM NO \nSUPPLIES/SERVICES'].index
                     index_change = True
                 count = 0
                 for i in indexxx:
                     dff = df.iloc[i + 1]
 
                     if seconddd==True:
-                        sss = dff['UNIT'].split('\n')
+                        sss = dff['unit'].split('\n')
                         if len(sss) > 1:
-                            dff['UNIT PRICE'] = sss[1]
+                            dff['unit_price'] = sss[1]
                         else:
-                            dff['UNIT PRICE'] = ''
+                            dff['unit_price'] = ''
 
                     if index_change == True:
-                        data_change = [dff['SUPPLIES/SERVICES'], dff['QUANTITY'], dff['UNIT']]
-                        dff['QUANTITY'] = data_change[0]
-                        dff['UNIT'] = data_change[1]
-                        dff['UNIT PRICE'] = data_change[2]
+                        data_change = [dff['supplies_or_services'], dff['quantity'], dff['unit']]
+                        dff['quantity'] = data_change[0]
+                        dff['unit'] = data_change[1]
+                        dff['unit_price'] = data_change[2]
                     json1 = dff.to_json()
                     aDict = json.loads(json1)
 
@@ -267,102 +267,117 @@ def first_method(pdf_path,pagess):
                         full_text = []
                         ccc = df.iloc[(i + 2):]
                         for index, row in ccc.iterrows():
-                            full_text.append(row['SUPPLIES/SERVICES'])
-                            full_text.append(row['QUANTITY'])
+                            full_text.append(row['supplies_or_services'])
+                            full_text.append(row['quantity'])
                         str1 = ''.join(full_text)
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
                         array = name.findall(str1)
-                        aDict['SUPPLIES/SERVICES'] = str1
-                        aDict['Clauses'] = array
-                        itemss.append(aDict)
+                        aDict['supplies_or_services'] = str1
+                        aDict['clauses'] = array
+                        items.append(aDict)
                         count += 1
                     else:
                         full_text = []
                         ccc = df.iloc[i + 2:indexxx[count + 1] - 1]
                         for index, row in ccc.iterrows():
-                            full_text.append(row['SUPPLIES/SERVICES'])
-                            full_text.append(row['QUANTITY'])
+                            full_text.append(row['supplies_or_services'])
+                            full_text.append(row['quantity'])
 
                         str1 = ''.join(full_text)
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
                         array = name.findall(str1)
                         count += 1
-                        aDict['SUPPLIES/SERVICES'] = str1
-                        aDict['Clauses'] = array
-                        itemss.append(aDict)
+                        aDict['supplies_or_services'] = str1
+                        aDict['clauses'] = array
+                        items.append(aDict)
 
             except:
                 pass
     except:
         pass
-    return itemss
+    return items
 
 
 def method2(pdf_path,pages):
-    itemss_list=[]
+    items_list=[]
     for p in pages:
-        pp=p+10
-        df = tabula.read_pdf(pdf_path, pages=str(p)+'-'+str(pp),stream=True)
+        page_end=p+10
+        df = tabula.read_pdf(pdf_path, pages=str(p)+'-'+str(page_end),stream=True)
         tables_list = []
         tables = df
         count = 0
         data = []
-        for t in tables:
+        for table in tables:
             try:
                 if count == 0:
-                    value = t.columns
-                    t.columns = value
-                    ff = t['Supplies/Service'].values.tolist()
-                    data.append(' '.join(str(v) for v in ff))
-                    t.drop('Supplies/Service', axis=1, inplace=True)
-                    t.dropna(axis=0, how='all', inplace=True)
+                    value = table.columns
+                    table.columns = value
+                    supplies_value = table['Supplies/Service'].values.tolist()
+                    data.append(' '.join(str(v) for v in supplies_value))
+                    table.drop('Supplies/Service', axis=1, inplace=True)
+                    table.dropna(axis=0, how='all', inplace=True)
                     count += 1
-                    tables_list.append(t)
+                    tables_list.append(table)
                 else:
-                    t.columns = value
-                    ff = t['Supplies/Service'].values.tolist()
-                    data.append(' '.join(str(v) for v in ff))
-                    t.drop('Supplies/Service', axis=1, inplace=True)
-                    t.dropna(axis=0, how='all', inplace=True)
-                    tables_list.append(t)
+                    table.columns = value
+                    supplies_value = table['Supplies/Service'].values.tolist()
+                    data.append(' '.join(str(v) for v in supplies_value))
+                    table.drop('Supplies/Service', axis=1, inplace=True)
+                    table.dropna(axis=0, how='all', inplace=True)
+                    tables_list.append(table)
             except:
                 pass
-    d = '.'.join(data)
+    target_data= '.'.join(data)
     new_list = []
-    d = d.replace('Firm Fixed Price', 'Firm Fixed Price fffff')
-    d = d.replace('Cost No Fee', 'Cost No Fee fffff')
-    d = d.split('fffff')
+    target_data = target_data.replace('Firm Fixed Price', 'Firm Fixed Price fffff')
+    target_data = target_data.replace('Cost No Fee', 'Cost No Fee fffff')
+    target_data = target_data.split('fffff')
     line_clauses=[]
-    for f in d:
+    for f in target_data:
         new_list.append(f)
         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
         array = name.findall(f)
         line_clauses.append(array)
 
-    dff = pd.concat(tables_list, axis=0, ignore_index=True)
-    vv = dff.loc[pd.isna(dff["Item"]), :].index
+    new_df = pd.concat(tables_list, axis=0, ignore_index=True)
+    vv = new_df.loc[pd.isna(new_df["Item"]), :].index
 
     for v in vv:
-        if pd.notnull(dff['Unit Price'][v]):
-            if pd.notnull(dff['Unit Price'][v - 1]):
-                dff.iloc[v - 1, 3] = str(dff.iloc[v - 1, 3]) + ' ' + str(dff.iloc[v, 3])
-            if pd.isnull(dff['Unit Price'][v - 1]):
-                dff.iloc[v - 1, 3] = str(dff.iloc[v, 3])
-        if pd.notnull(dff['Amount'][v]):
-            if pd.notnull(dff['Amount'][v + 1]):
-                dff.iloc[v + 1, 4] = str(dff.iloc[v, 4]) + '\n' + str(dff.iloc[v + 1, 4])
-            elif pd.isnull(dff['Amount'][v + 1]):
-                dff.iloc[v + 1, 4] = str(dff.iloc[v, 4])
+        if pd.notnull(new_df['Unit Price'][v]):
+            if pd.notnull(new_df['Unit Price'][v - 1]):
+                new_df.iloc[v - 1, 3] = str(new_df.iloc[v - 1, 3]) + ' ' + str(new_df.iloc[v, 3])
+            if pd.isnull(new_df['Unit Price'][v - 1]):
+                new_df.iloc[v - 1, 3] = str(new_df.iloc[v, 3])
+        if pd.notnull(new_df['Amount'][v]):
+            if pd.notnull(new_df['Amount'][v + 1]):
+                new_df.iloc[v + 1, 4] = str(new_df.iloc[v, 4]) + '\n' + str(new_df.iloc[v + 1, 4])
+            elif pd.isnull(new_df['Amount'][v + 1]):
+                new_df.iloc[v + 1, 4] = str(new_df.iloc[v, 4])
 
-    dff.dropna(thresh=2, axis=0, inplace=True)
-    dff['Supplies/Services'] = new_list
-    dff['Clauses'] = line_clauses
-    itemsss=dff.to_json(orient="index")
-    itemsss=json.loads(itemsss)
-    for it in itemsss:
-        itemss_list.append(itemsss[str(it)])
-    for i in itemss_list:
-        item_value=str(int(i['Item']))
+    new_df.dropna(thresh=2, axis=0, inplace=True)
+    new_df['Supplies/Services'] = new_list
+    new_df['Clauses'] = line_clauses
+    items_json=new_df.to_json(orient="index")
+    items_json=json.loads(items_json)
+
+    for it in items_json:
+        items_list.append(items_json[str(it)])
+    for i in items_list:
+        i['item'] = i['Item']
+        del i['Item']
+        i['quantity'] = i['Quantity']
+        del i['Quantity']
+        i['unit'] = i['Unit']
+        del i['Unit']
+        i['unit_price'] = i['Unit Price']
+        del i['Unit Price']
+        i['supplies_or_services'] = i['Supplies/Services']
+        del i['Supplies/Services']
+        i['amount'] = i['Amount']
+        del i['Amount']
+        i['clauses'] = i['Clauses']
+        del i['Clauses']
+        item_value=str(int(i['item']))
         item_value_updated = item_value
         if len(item_value)==1:
             item_value_updated='000'+item_value
@@ -370,60 +385,61 @@ def method2(pdf_path,pages):
             item_value_updated='00'+item_value
         elif len(item_value)==3:
             item_value_updated='0'+item_value
-        i['Item']=item_value_updated
+        i['item']=item_value_updated
 
-    return itemss_list
+    return items_list
 
 
-def third_method(pdf_path,pagess):
-    pagesss=','.join(str(v) for v in pagess)
-    itemss = []
+def third_method(pdf_path,pages):
+    all_pages=','.join(str(v) for v in pages)
+    items = []
     try:
-        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=pagesss)
+        tables = camelot.read_pdf(pdf_path,flavor='stream', edge_tol=500, pages=all_pages)
         for table in tables:
             try:
                 df = table.df
-                df.columns = ['ITEM NO', 'SUPPLIES/SERVICES', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'AMOUNT']
-                indexxx = df.loc[df['ITEM NO'] == 'ITEM NO'].index
+                df.columns = ['item', 'supplies_or_services', 'quantity', 'unit', 'unit_price', 'amount']
+
+                indexxx = df.loc[df['item'] == 'ITEM NO'].index
 
                 count = 0
                 for i in indexxx:
-                    dff = df.iloc[i + 2]
-                    json1 = dff.to_json()
+                    target_df = df.iloc[i + 2]
+                    json1 = target_df.to_json()
                     aDict = json.loads(json1)
                     if indexxx[-1] == i:
                         full_text = []
-                        ccc = df.iloc[(i + 2):]
-                        for index, row in ccc.iterrows():
-                            full_text.append(row['SUPPLIES/SERVICES'])
+                        new_target = df.iloc[(i + 2):]
+                        for index, row in new_target.iterrows():
+                            full_text.append(row['supplies_or_services'])
                         str1 = ''.join(full_text)
-                        aDict['SUPPLIES/SERVICES'] = str1
+                        aDict['supplies_or_services'] = str1
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
                         array = name.findall(str1)
-                        aDict['Clauses'] = array
-                        itemss.append(aDict)
+                        aDict['clauses'] = array
+                        items.append(aDict)
                         count += 1
                     else:
                         full_text = []
-                        ccc = df.iloc[i + 2:indexxx[count + 1] - 1]
-                        for index, row in ccc.iterrows():
-                            full_text.append(row['SUPPLIES/SERVICES'])
+                        new_target = df.iloc[i + 2:indexxx[count + 1] - 1]
+                        for index, row in new_target.iterrows():
+                            full_text.append(row['supplies_or_services'])
                         str1 = ''.join(full_text)
                         count += 1
                         name = re.compile(r'\d{2,6}.\d{1,5}-\d{1,5}')
                         array = name.findall(str1)
-                        aDict['SUPPLIES/SERVICES'] = str1
-                        aDict['Clauses'] = array
-                        itemss.append(aDict)
+                        aDict['supplies_or_services'] = str1
+                        aDict['clauses'] = array
+                        items.append(aDict)
             except:
                 pass
 
     except:
         pass
 
-    return itemss
+    return items
 
-def get_clausess(pdf_path):
+def get_clauses(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
         #get number of pages
         NumPages = len(pdf.pages)
@@ -441,86 +457,86 @@ def get_clausess(pdf_path):
                 if array.group():
                     NumRegex2 = re.compile(r'\d{4}', flags=0)
                     NumRegex3 = re.compile(r'\d{4}-\d{2}', flags=0)
-                    gg = Text.split('\n')
-                    for g in gg:
+                    splited_text = Text.split('\n')
+                    for line in splited_text:
                         third = False
-                        ggg = g.split(' ')
+                        splited_line = line.split(' ')
                         try:
-                            next_linee = gg[gg.index(g) + 1]
-                            nn=next_linee.split(' ')
+                            next_line = splited_text[splited_text.index(line) + 1]
+                            next_line_splited=next_line.split(' ')
                         except:
                             pass
-                        ccc=''
-                        if NumRegex.search(ggg[0]) and NumRegex2.search(nn[-1]):
-                            if not NumRegex2.search(ggg[-1]):
-                                ccc = g + ' ' + next_linee
-                                if len(ccc) > 20:
-                                    ccc = ccc.replace('(', '')
-                                    ccc = ccc.replace(')', '')
-                                    yy = ccc.split(' ')
-                                    if yy[-2] in Months_list:
-                                        yy[-2] = yy[-1] + '-' + str(Months_list.index(yy[-2]))
-                                        yy = yy[:-1]
-                                        g = ' '.join(yy)
-                                    if '/' in yy[-1]:
-                                        month = yy[-1].split('/')[1]
-                                        year = yy[-1].split('/')[2]
-                                        yy[-1] = year + '-' + month
-                                        g = ' '.join(yy)
-                                    clauses_list.append(g)
+                        full_line=''
+                        if NumRegex.search(splited_line[0]) and NumRegex2.search(next_line_splited[-1]):
+                            if not NumRegex2.search(splited_line[-1]):
+                                full_line = line + ' ' + next_line
+                                if len(full_line) > 20:
+                                    full_line = full_line.replace('(', '')
+                                    full_line = full_line.replace(')', '')
+                                    full_line_split = full_line.split(' ')
+                                    if full_line_split[-2] in Months_list:
+                                        full_line_split[-2] = full_line_split[-1] + '-' + str(Months_list.index(full_line_split[-2]))
+                                        full_line_split = full_line_split[:-1]
+                                        line = ' '.join(full_line_split)
+                                    if '/' in full_line_split[-1]:
+                                        month = full_line_split[-1].split('/')[1]
+                                        year = full_line_split[-1].split('/')[2]
+                                        full_line_split[-1] = year + '-' + month
+                                        line = ' '.join(full_line_split)
+                                    clauses_list.append(line)
 
 
-                        if NumRegex.search(ggg[0]) and (NumRegex2.search(ggg[-1])) :
-                            lennn = False
+                        if NumRegex.search(splited_line[0]) and (NumRegex2.search(splited_line[-1])) :
+                            length = False
                             try:
-                                next_index=gg[gg.index(g)+1]
+                                next_index=splited_text[splited_text.index(line)+1]
 
                                 nexxx=next_index.split(' ')
 
-                                if len(g)>=65 and len(lenarray)>3:
+                                if len(line)>=65 and len(lenarray)>3:
                                     if not NumRegex.search(nexxx[0]):
-                                        lennn=True
-                                        if g!=gg[-1] or g!=gg[-2] :
-                                            thirddd=gg[gg.index(g) + 2]
-                                            third_index = gg[gg.index(g) + 2].split(' ')
+                                        length=True
+                                        if line!=splited_text[-1] or line!=splited_text[-2] :
+                                            thirddd=splited_text[splited_text.index(line) + 2]
+                                            third_index = splited_text[splited_text.index(line) + 2].split(' ')
                                             if not NumRegex.search(third_index[0]) and len(third_index[0])<70 and len(lenarray)>8:
                                                 third=True
                             except:
                                 pass
-                            if len(g)>20:
-                                g=g.replace('(','')
-                                g=g.replace(')','')
-                                yy=g.split(' ')
-                                if yy[-2] in Months_list:
-                                    yy[-2]=yy[-1]+'-'+str(Months_list.index(yy[-2]))
-                                    yy=yy[:-1]
-                                    g=' '.join(yy)
-                                if '/' in yy[-1]:
-                                    month=yy[-1].split('/')[1]
-                                    year=yy[-1].split('/')[2]
-                                    yy[-1]=year+'-'+month
-                                    g=' '.join(yy)
-                                if lennn==True and third==False:
-                                    g=g.split(' ')
-                                    g=' '.join(g[0:-1])+' '+next_index+' '+g[-1]
-                                elif lennn==True and third==True:
-                                    g = g.split(' ')
-                                    g = ' '.join(g[0:-1]) + ' ' + next_index +' '+thirddd+ ' ' + g[-1]
-                                clauses_list.append(g)
+                            if len(line)>20:
+                                line=line.replace('(','')
+                                line=line.replace(')','')
+                                full_line_split=line.split(' ')
+                                if full_line_split[-2] in Months_list:
+                                    full_line_split[-2]=full_line_split[-1]+'-'+str(Months_list.index(full_line_split[-2]))
+                                    full_line_split=full_line_split[:-1]
+                                    line=' '.join(full_line_split)
+                                if '/' in full_line_split[-1]:
+                                    month=full_line_split[-1].split('/')[1]
+                                    year=full_line_split[-1].split('/')[2]
+                                    full_line_split[-1]=year+'-'+month
+                                    line=' '.join(full_line_split)
+                                if length==True and third==False:
+                                    line=line.split(' ')
+                                    line=' '.join(line[0:-1])+' '+next_index+' '+line[-1]
+                                elif length==True and third==True:
+                                    line = line.split(' ')
+                                    line = ' '.join(line[0:-1]) + ' ' + next_index +' '+thirddd+ ' ' + line[-1]
+                                clauses_list.append(line)
 
-                        if NumRegex.search(ggg[0]) and (NumRegex3.search(ggg[-1])):
-                            if len(g.split(' '))==2:
-                                cc=ggg[0]+' '+gg[gg.index(g)-1]+' '+gg[gg.index(g)+1]+' '+ggg[-1]
-                                clauses_list.append(cc)
+                        if NumRegex.search(splited_line[0]) and (NumRegex3.search(splited_line[-1])):
+                            if len(line.split(' '))==2:
+                                new_clause=splited_line[0]+' '+splited_text[splited_text.index(line)-1]+' '+splited_text[splited_text.index(line)+1]+' '+splited_line[-1]
+                                clauses_list.append(new_clause)
             except Exception as e:
                 pass
 
-    clausess_new_list = []
+    clauses_new_list = []
     for c in clauses_list:
-        cc = c.split(' ')
-        clausee = cc[0] + ' | ' + ' '.join(cc[1:-1]) + ' | ' + cc[-1]
-        clausess_new_list.append(clausee)
-    return clausess_new_list
+        splited_clause = c.split(' ')
+        updated_clause = splited_clause[0] + ' | ' + ' '.join(splited_clause[1:-1]) + ' | ' + splited_clause[-1]
+        clauses_new_list.append(updated_clause)
+    return clauses_new_list
 
 
 
@@ -531,7 +547,7 @@ def main(pdf_path,result):
     mydict=get_first_page(result)
 
     #getting method and page numbers
-    pagess,method=get_tabless_pages(pdf_path)
+    pagess,method=get_tables_pages(pdf_path)
 
     #different methods to get lineitems depend on method
     if method=='first':
@@ -546,7 +562,7 @@ def main(pdf_path,result):
     elif method=='':
         mydict['items']=[]
     #for getting clauses
-    clausess=get_clausess(pdf_path)
+    clausess=get_clauses(pdf_path)
     mydict['clauses']=clausess
     return mydict
 
