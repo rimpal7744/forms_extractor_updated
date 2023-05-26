@@ -12,7 +12,6 @@ def get_key_boxes(result):
     for element in result:
         #all regex matching for keys respectively
 
-        # Amendmentregexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)')
         Contract_regexp = re.compile(r'(CONTRACT)|(CONIRACT)|(Contract)')
         Contract_regexp2 = re.compile(r'(NO)|(NO.)|(NUMBER)|(no.)|(No.)')
         Date_regexp = re.compile(r'(EFFECTIVE)|(EFFECIVE)|(Effective)')
@@ -205,35 +204,37 @@ def get_table(pdf_path,pages):
             df = table.df
             count=0
             try:
-                df.columns=['ITEM','SUPPLIES OR SERVICES','Purch Unit','Total Item Amount']
-                main_index = df[df['ITEM'] == 'ITEM'].index.tolist()
+                df.columns=['item','supplies_or_services','unit', 'amount']
+                main_index = df[df['item'] == 'ITEM'].index.tolist()
                 df=df.loc[main_index[0]+1:,:]
             except:
-                df.columns = ['ITEM', 'ITEM2','SUPPLIES OR SERVICES', 'Purch Unit', 'Total Item Amount']
-                df['ITEM']=df['ITEM']+df['ITEM2']
-                df.drop('ITEM2', axis=1, inplace=True)
-                df.columns = ['ITEM', 'SUPPLIES OR SERVICES', 'Purch Unit', 'Total Item Amount']
-                main_index = df[df['ITEM'] == 'ITEM'].index.tolist()
+                df.columns = ['item', 'item2','supplies_or_services', 'unit', 'amount']
+                df['item']=df['item']+df['item2']
+                df.drop('item2', axis=1, inplace=True)
+                df.columns=['item','supplies_or_services','unit', 'amount']
+                main_index = df[df['item'] == 'ITEM'].index.tolist()
                 df = df.loc[main_index[0]+1:, :]
 
-            index1=df[df['ITEM']!=''].index.tolist()
+            index1=df[df['item']!=''].index.tolist()
             for i in index1:
                 new_df=df.loc[i]
                 df_json = new_df.to_json()
                 aDict = json.loads(df_json)
-                aDict['ITEM'] = aDict['ITEM'].replace('\n','')
-                res = any(chr.isdigit() for chr in aDict['ITEM'])
+                aDict['item'] = aDict['item'].replace('\n','')
+                res = any(chr.isdigit() for chr in aDict['item'])
                 if res:
                     if index1[-1] == i:
                         full_text = []
                         target_df = df.iloc[(i):]
                         for index, row in target_df.iterrows():
-                            full_text.append(' '+row['SUPPLIES OR SERVICES']+' '+row['Purch Unit'])
+                            full_text.append(' '+row['supplies_or_services']+' '+row['unit'])
                         str1 = ' '.join(full_text)
                         name = re.compile(r'(?:\d{2,6}.\d{1,5}?-\d{1,5})|(?:\d{2,6}.\d{1,5})')
                         clauses = name.findall(str1)
-                        aDict['SUPPLIES OR SERVICES'] = str1
-                        aDict['Clauses'] = clauses
+                        aDict['supplies_or_services'] = str1
+                        aDict['quantity'] = ''
+                        aDict['unit_price'] = ''
+                        aDict['clauses'] = clauses
                         items.append(aDict)
                         count += 1
 
@@ -241,13 +242,15 @@ def get_table(pdf_path,pages):
                         full_text = []
                         target_df = df.iloc[i :index1[count+1] ]
                         for index, row in target_df.iterrows():
-                            full_text.append(row['SUPPLIES OR SERVICES']+' '+row['Purch Unit'])
+                            full_text.append(row['supplies_or_services']+' '+row['unit'])
                         supplies = ' '.join(full_text)
                         name = re.compile(r'(?:\d{2,6}.\d{1,5}?-\d{1,5})|(?:\d{2,6}.\d{1,5})')
                         clauses = name.findall(supplies)
                         count += 1
-                        aDict['SUPPLIES OR SERVICES'] = supplies
-                        aDict['Clauses'] = clauses
+                        aDict['supplies_or_services'] = supplies
+                        aDict['quantity'] = ''
+                        aDict['unit_price'] = ''
+                        aDict['clauses'] = clauses
                         items.append(aDict)
 
         except Exception as e:
