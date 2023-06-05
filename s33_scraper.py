@@ -22,7 +22,7 @@ def get_key_boxes(result):
         Rating_regexp = re.compile(r'(RATING)|(RAIING)')
         Email_regexp = re.compile(r'(E-MAIL ADDRESS)|(E-MAILADDRESS)')
         Email_regexp2 = re.compile(r'(C)|(C.)')
-        Requisition_regexp = re.compile(r'(REQUISITION)|(SOLICITAIION)')
+        Requisition_regexp = re.compile(r'(REQUISITION)|(RE QUISITION)|(SOLICITAIION)')
         Requisition_regexp2 = re.compile(r'(NUMBER)|(NO.)|(NO)')
         Solicitation_regexp = re.compile(r'(SOLICITATION)|(SOLICITAIION)')
         Solicitation_regexp2 = re.compile(r'(NO)|(NUMBER)|(NO.)')
