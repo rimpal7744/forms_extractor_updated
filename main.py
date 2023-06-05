@@ -3,6 +3,7 @@ from paddleocr import PaddleOCR
 from s26_scraper import mains26
 from s30_scraper import mains30
 from s33_scraper import main
+from s1449_scraper import main_1449
 import uvicorn
 import numpy as np
 from pdf2image import convert_from_path
@@ -28,7 +29,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     form30regexp = re.compile(r'(FORM 30)|(FORM30)')
     form33regexp = re.compile(r'(FORM 33)|(FORM33)')
     form26regexp = re.compile(r'(FORM 26)|(FORM26)|(FORM 25)|(FORM25)|(Form 26)|(Form 25)')
-
+    form1449regexp = re.compile(r'(FORM 1449)|(FORM1449)')
     Parse=False
     final_result={}
     form_type=''
@@ -51,7 +52,10 @@ async def create_upload_file(file: UploadFile = File(...)):
         print('33form')
         final_result=main(file_location,result)
         Parse=True
-
+    elif form1449regexp.search(form_type):
+        print('1449form')
+        final_result=main_1449(result)
+        Parse=True
     else:
         pass
 
